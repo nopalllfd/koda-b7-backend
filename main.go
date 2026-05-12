@@ -117,7 +117,7 @@ func main() {
 		}
 		//existing email validation
 		if email == "nopal@gmail.com" {
-			SendResponse(ctx, http.StatusConflict, false, "Email already exists", nil, nil)
+			SendResponse(ctx, http.StatusBadRequest, false, "Email already exists", nil, nil)
 			return
 		}
 
