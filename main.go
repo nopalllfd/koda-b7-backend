@@ -4,6 +4,7 @@ import (
 	// untuk logging
 	// informasi dari protocol (status code)
 
+	"log"
 	"net/http"
 	"regexp"
 
@@ -30,6 +31,15 @@ func SendResponse(c *gin.Context, code int, success bool, message string, data a
 		Data:    data,
 		Error:   err,
 	})
+
+	log.Printf(
+		"[%s] %s -> %d | success=%v | message=%s",
+		c.Request.Method,
+		c.Request.URL.Path,
+		code,
+		success,
+		message,
+	)
 }
 
 func ValidateEmail(email string) bool {
