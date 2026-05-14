@@ -1,1 +1,6 @@
-go.sum
+.env*
+
+http
+
+tmp
+.air.toml
