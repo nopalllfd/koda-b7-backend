@@ -15,7 +15,7 @@ func CORSMiddleware(ctx *gin.Context) {
 		ctx.Header("Access-Control-Allow-Origin", currentOrigin)
 	}
 
-	allowedHeaders := []string{"Content-Type", "X-Koda-X"}
+	allowedHeaders := []string{"Content-Type", "X-Koda-X", "Authorization"}
 	ctx.Header("Access-Control-Allow-Headers", strings.Join(allowedHeaders, ", "))
 
 	allowedMethods := []string{http.MethodGet, http.MethodPost, http.MethodPut, http.MethodDelete, http.MethodPatch, http.MethodOptions}

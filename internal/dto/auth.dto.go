@@ -14,3 +14,8 @@ type LoginResponse struct {
 	Email string `json:"email"`
 	Token string `json:"token"`
 }
+
+type AddPinRequest struct {
+	UserID int    `json:"user_id"`
+	Pin    string `json:"pin"`
+}

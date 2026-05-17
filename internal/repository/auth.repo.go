@@ -50,16 +50,28 @@ func (ar *AuthRepository) FindByEmail(ctx context.Context, email string) (bool, 
 	return exists, nil
 }
 
-func (ar *AuthRepository) Create(ctx context.Context, email string, password string) error {
-	sql := `INSERT INTO users (email,password) VALUES ($1,$2)`
+func (ar *AuthRepository) Create(ctx context.Context, email string, password string) (int, error) {
+	sql := `INSERT INTO users (email,password) VALUES ($1,$2) RETURNING id`
 
-	_, err := ar.db.Exec(ctx, sql, email, password)
+	var userId int
+	err := ar.db.QueryRow(ctx, sql, email, password).Scan(&userId)
 	if err != nil {
-		return fmt.Errorf(
+		return 0, fmt.Errorf(
 			"create user: %w",
 			err,
 		)
 	}
 
+	return userId, nil
+}
+
+func (ar *AuthRepository) CreatePin(ctx context.Context, pin string, id int) error {
+	sql := `UPDATE users
+	SET pin = $1
+	WHERE id = $2
+	`
+	if _, err := ar.db.Exec(ctx, sql, pin, id); err != nil {
+		return err
+	}
 	return nil
 }

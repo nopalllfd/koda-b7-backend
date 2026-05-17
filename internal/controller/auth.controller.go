@@ -2,6 +2,7 @@ package controller
 
 import (
 	"backend-golang/internal/dto"
+	errs "backend-golang/internal/err"
 	"backend-golang/internal/service"
 	"backend-golang/pkg/utils"
 	"errors"
@@ -53,11 +54,11 @@ func (ac *AuthController) Login(ctx *gin.Context) {
 	// jalankan dan kirim ke service
 	data, err := ac.authService.Login(ctx.Request.Context(), user)
 	if err != nil {
-		if errors.Is(err, service.ErrInvalidCredential) {
+		if errors.Is(err, errs.ErrInvalidCredential) {
 			utils.SendResponse(ctx, http.StatusBadRequest, false, "login failed", nil, err.Error())
 			return
 		}
-		if errors.Is(err, service.ErrEmailNotFound) {
+		if errors.Is(err, errs.ErrEmailNotFound) {
 			utils.SendResponse(ctx, http.StatusBadRequest, false, "login failed", nil, err.Error())
 			return
 		}
@@ -96,14 +97,25 @@ func (ac *AuthController) Register(ctx *gin.Context) {
 		return
 	}
 	if err := ac.authService.Register(ctx.Request.Context(), user); err != nil {
-		if errors.Is(err, service.ErrExistingEmail) {
+		if errors.Is(err, errs.ErrExistingEmail) {
 			utils.SendResponse(ctx, http.StatusConflict, false, "register Failed", nil, err.Error())
 			return
 		}
-		if errors.Is(err, service.ErrInternalServer) {
+		if errors.Is(err, errs.ErrInternalServer) {
 			utils.SendResponse(ctx, http.StatusInternalServerError, false, "register Failed", nil, err.Error())
 			return
 		}
 	}
-	utils.SendResponse(ctx, http.StatusCreated, true, "register Success", nil, nil)
+	utils.SendResponse(ctx, http.StatusCreated, true, "register success", nil, nil)
+}
+
+func (ac *AuthController) AddPin(ctx *gin.Context) {
+	var user dto.AddPinRequest
+	if err := ctx.ShouldBindBodyWith(&user, binding.JSON); err != nil {
+		utils.SendResponse(ctx, http.StatusInternalServerError, false, "Internal Server Error", nil, err)
+		return
+	}
+	ac.authService.AddPin(ctx.Request.Context(), user)
+	utils.SendResponse(ctx, http.StatusCreated, true, "add pin success", nil, nil)
+
 }
