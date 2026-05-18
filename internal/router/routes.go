@@ -13,6 +13,7 @@ func InitRoutes(app *gin.Engine, db *pgxpool.Pool) {
 	{
 		SetupAuthRoute(api, app, db)
 		SetupUserRoute(api, app, db)
+		SetupTransactionRoute(api, app, db)
 	}
 
 }

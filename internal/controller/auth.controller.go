@@ -4,7 +4,6 @@ import (
 	"backend-golang/internal/dto"
 	errs "backend-golang/internal/err"
 	"backend-golang/internal/service"
-	"backend-golang/pkg"
 	"backend-golang/pkg/utils"
 	"errors"
 	"net/http"
@@ -119,19 +118,4 @@ func (ac *AuthController) AddPin(ctx *gin.Context) {
 	ac.authService.AddPin(ctx.Request.Context(), user)
 	utils.SendResponse(ctx, http.StatusCreated, true, "add pin success", nil, nil)
 
-}
-
-func (ac *AuthController) CheckPin(ctx *gin.Context) {
-	token, _ := ctx.Get("claims")
-	claims := token.(pkg.Claims)
-	var user dto.UserPIN
-	if err := ctx.ShouldBindBodyWith(&user, binding.JSON); err != nil {
-		utils.SendResponse(ctx, http.StatusInternalServerError, false, "Internal Server Error", nil, err)
-		return
-	}
-	if err := ac.authService.CheckPin(ctx.Request.Context(), claims.Id, user.Pin); err != nil {
-		utils.SendResponse(ctx, http.StatusInternalServerError, false, "error", nil, err.Error())
-		return
-	}
-	utils.SendResponse(ctx, http.StatusCreated, true, "your pin is valid", nil, nil)
 }

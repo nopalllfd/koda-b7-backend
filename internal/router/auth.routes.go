@@ -2,7 +2,6 @@ package router
 
 import (
 	"backend-golang/internal/controller"
-	"backend-golang/internal/middleware"
 	"backend-golang/internal/repository"
 	"backend-golang/internal/service"
 
@@ -24,6 +23,5 @@ func SetupAuthRoute(r *gin.RouterGroup, app *gin.Engine, db *pgxpool.Pool) {
 		//register
 		auth.POST("/register", AuthController.Register)
 		auth.POST("/register/pin", AuthController.AddPin)
-		auth.POST("/pin/checked", middleware.VerifyMiddleware, AuthController.CheckPin)
 	}
 }

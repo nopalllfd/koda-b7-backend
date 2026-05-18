@@ -1,14 +1,10 @@
 package repository
 
 import (
-	errs "backend-golang/internal/err"
 	"backend-golang/internal/model"
 	"context"
-	"errors"
 	"fmt"
-	"log"
 
-	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgxpool"
 )
 
@@ -78,19 +74,6 @@ func (ar *AuthRepository) CreatePin(ctx context.Context, pin string, id int) err
 		return err
 	}
 	return nil
-}
-
-func (ar *AuthRepository) GetPinByUserId(ctx context.Context, id int) (string, error) {
-	sql := `SELECT pin FROM users WHERE id=$1`
-	var pin string
-	if err := ar.db.QueryRow(ctx, sql, id).Scan(&pin); err != nil {
-		if errors.Is(err, pgx.ErrNoRows) {
-			return "", errs.ErrUserNotFound
-		}
-		return "", err
-	}
-	log.Println("Ini log", pin)
-	return pin, nil
 }
 
 // func (ar *AuthRepository) GetPin(ctx )
