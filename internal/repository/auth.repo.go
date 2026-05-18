@@ -75,3 +75,5 @@ func (ar *AuthRepository) CreatePin(ctx context.Context, pin string, id int) err
 	}
 	return nil
 }
+
+// func (ar *AuthRepository) GetPin(ctx )

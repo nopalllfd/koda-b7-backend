@@ -53,7 +53,6 @@ func (as *AuthService) Login(ctx context.Context, req dto.LoginRequest) (*dto.Lo
 	}
 
 	result := &dto.LoginResponse{
-		ID:    existingUser.Id,
 		Email: existingUser.Email,
 		Token: token,
 	}
