@@ -24,7 +24,7 @@ func NewAuthRepo(db *pgxpool.Pool) *AuthRepository {
 
 func (ar *AuthRepository) GetUserByEmail(ctx context.Context, email string) (*model.User, error) {
 	// definisiin
-	sql := `SELECT id, email, password, pin
+	sql := `SELECT id, email, password, COALESCE(pin, '')
 	FROM users
 	WHERE email = $1`
 	// ngeeksekusi query
