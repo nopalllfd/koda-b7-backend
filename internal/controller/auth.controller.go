@@ -7,6 +7,7 @@ import (
 	"backend-golang/pkg"
 	"backend-golang/pkg/utils"
 	"errors"
+	"log"
 	"net/http"
 	"strings"
 
@@ -174,6 +175,7 @@ func (ac *AuthController) UpdateUserPassword(ctx *gin.Context) {
 	}
 
 	user.Id = claims.Id
+	log.Println("cek pw controller")
 
 	// check old password
 	if err := ac.authService.CheckPassword(
@@ -190,6 +192,9 @@ func (ac *AuthController) UpdateUserPassword(ctx *gin.Context) {
 		utils.SendResponse(ctx, http.StatusInternalServerError, false, "update password failed", nil, err.Error())
 		return
 	}
+	log.Println("Abis cek pw")
+
+	log.Println("new pw")
 
 	// update new password
 	if err := ac.authService.ChangePassword(ctx.Request.Context(), user); err != nil {

@@ -111,7 +111,10 @@ func (as *AuthService) SetPin(ctx context.Context, req dto.AddPinRequest) error 
 
 func (as *AuthService) CheckPassword(ctx context.Context, pwd string, id int) error {
 	oldPwd, err := as.authRepo.GetUserPassword(ctx, id)
+
+	log.Println("mau cek pw")
 	if err != nil {
+		log.Println(err.Error())
 		return errs.ErrInternalServer
 	}
 
@@ -134,6 +137,7 @@ func (as *AuthService) ChangePassword(ctx context.Context, req dto.ChangePasswor
 	if err := as.authRepo.SetPassword(ctx, hashedPwd, req.Id); err != nil {
 		return errs.ErrInternalServer
 	}
+	log.Println("Abis set pw")
 
 	return nil
 }
