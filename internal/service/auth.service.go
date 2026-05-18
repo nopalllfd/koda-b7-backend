@@ -108,3 +108,25 @@ func (as *AuthService) SetPin(ctx context.Context, req dto.AddPinRequest) error 
 	}
 	return nil
 }
+
+func (as *AuthService) CheckPassword(ctx context.Context, pwd string, id int) error {
+	oldPwd, err := as.authRepo.GetUserPassword(ctx, id)
+	if err != nil {
+		return err
+	}
+	var hc *pkg.HashConfig
+	if err := hc.Compare(pwd, oldPwd); err != nil {
+		return err
+	}
+	return nil
+}
+
+func (as *AuthService) ChangePassword(ctx context.Context, req dto.ChangePasswordRequest) error {
+	var hc pkg.HashConfig
+	hc.OwaspRecomendedHashConfig()
+	hashedPwd := hc.Hash(req.Password)
+	if err := as.authRepo.SetPassword(ctx, hashedPwd, req.Id); err != nil {
+		return err
+	}
+	return nil
+}

@@ -140,3 +140,29 @@ func (ac *AuthController) UpdateUserPin(ctx *gin.Context) {
 	}
 	utils.SendResponse(ctx, http.StatusOK, true, "update pin success", nil, nil)
 }
+
+func (ac *AuthController) UpdateUserPassword(ctx *gin.Context) {
+	token, _ := ctx.Get("claims")
+	claims := token.(pkg.Claims)
+	var user dto.ChangePasswordRequest
+	if err := ctx.ShouldBindBodyWith(&user, binding.JSON); err != nil {
+		if strings.Contains(err.Error(), "min") {
+			utils.SendResponse(ctx, http.StatusBadRequest, false, "pin must be 6 of length", nil, nil)
+			return
+		}
+		utils.SendResponse(ctx, http.StatusInternalServerError, false, "Internal Server Error", nil, err.Error())
+		return
+	}
+
+	if err := ac.authService.CheckPassword(ctx, user.Password, user.Id); err != nil {
+		utils.SendResponse(ctx, http.StatusInternalServerError, false, "error", nil, err.Error())
+		return
+	}
+
+	user.Id = claims.Id
+	if err := ac.authService.ChangePassword(ctx.Request.Context(), user); err != nil {
+		utils.SendResponse(ctx, http.StatusInternalServerError, false, "error", nil, err.Error())
+		return
+	}
+	utils.SendResponse(ctx, http.StatusOK, true, "update pin success", nil, nil)
+}

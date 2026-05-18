@@ -24,3 +24,8 @@ type AddPinRequest struct {
 type UserPIN struct {
 	Pin string `json:"pin"`
 }
+
+type ChangePasswordRequest struct {
+	Id       int    `json:"id"`
+	Password string `json:"password" binding:"required,min=8"`
+}

@@ -75,6 +75,27 @@ func (ar *AuthRepository) SetPin(ctx context.Context, pin string, id int) error 
 	}
 	return nil
 }
+func (ar *AuthRepository) GetUserPassword(ctx context.Context, id int) (string, error) {
+	sql := `SELECT password FROM users WHERE password = $1
+	)`
+	var userPassword string
+	if err := ar.db.QueryRow(ctx, sql, id).Scan(&userPassword); err != nil {
+		return "", err
+	}
 
+	return userPassword, nil
+}
+
+func (ar *AuthRepository) SetPassword(ctx context.Context, newPass string, id int) error {
+	sql := `UPDATE users
+	SET password = $1
+	WHERE id = $2
+	`
+	if _, err := ar.db.Exec(ctx, sql, newPass, id); err != nil {
+		return err
+	}
+
+	return nil
+}
 
 // func (ar *AuthRepository) GetPin(ctx )
