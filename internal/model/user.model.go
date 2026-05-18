@@ -10,3 +10,7 @@ type User struct {
 	Created_at time.Time `db:"created_at"`
 	Updated_at time.Time `db:"updated_at_at"`
 }
+
+type UserPIN struct {
+	Pin *string `db:"pin"`
+}

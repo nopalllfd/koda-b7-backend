@@ -20,5 +20,6 @@ func SetupUserRoute(r *gin.RouterGroup, app *gin.Engine, db *pgxpool.Pool) {
 	{
 		user.GET("/profile", UserController.GetProfile)
 		user.PUT("/profile", UserController.EditProfile)
+
 	}
 }

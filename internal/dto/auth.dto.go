@@ -18,3 +18,7 @@ type AddPinRequest struct {
 	UserID int    `json:"user_id"`
 	Pin    string `json:"pin"`
 }
+
+type UserPIN struct {
+	Pin string `json:"pin"`
+}

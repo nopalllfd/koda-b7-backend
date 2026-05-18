@@ -29,5 +29,5 @@ func (wr *WalletRepository) Create(ctx context.Context, userID, balance int) err
 }
 
 // func (wr *WalletRepository) GetDashboard(ctx context.Context) (model.WalletSummary, error) {
-// 	sql :=
+// 	sql := "SELECT w.balance,  FROM "
 // }

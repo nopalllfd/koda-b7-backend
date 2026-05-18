@@ -105,3 +105,17 @@ func (as *AuthService) AddPin(ctx context.Context, req dto.AddPinRequest) error 
 	}
 	return nil
 }
+
+func (as *AuthService) CheckPin(ctx context.Context, userID int, pin string) error {
+	var hc pkg.HashConfig
+	hc.OwaspRecomendedHashConfig()
+	existingPin, err := as.authRepo.GetPinByUserId(ctx, userID)
+	if err != nil {
+		return err
+	}
+
+	if err := hc.Compare(pin, existingPin); err != nil {
+		return errs.ErrInvalidPin
+	}
+	return nil
+}

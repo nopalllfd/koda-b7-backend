@@ -19,4 +19,7 @@ var (
 	ErrUserNotFound         = errors.New("user tidak ditemukan")
 	ErrInvalidBalance       = errors.New("saldo tidak valid")
 	ErrTimeoutOrCanceled    = errors.New("proses dibatalkan atau waktu habis")
+
+	ErrPINNotSet  = errors.New("user belum mengatur PIN")
+	ErrInvalidPin = errors.New("pin salah")
 )
