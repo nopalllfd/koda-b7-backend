@@ -1,6 +1,7 @@
 package repository
 
 import (
+	"backend-golang/internal/model"
 	"context"
 
 	"github.com/jackc/pgx/v5/pgxpool"
@@ -28,6 +29,35 @@ func (wr *WalletRepository) Create(ctx context.Context, userID, balance int) err
 	return nil
 }
 
-// func (wr *WalletRepository) GetDashboard(ctx context.Context) (model.WalletSummary, error) {
-// 	sql := "SELECT w.balance,  FROM "
-// }
+func (wr *WalletRepository) GetDashboard(ctx context.Context, userID int) (model.WalletSummary, error) {
+	sql := `SELECT 
+    (
+        SELECT COALESCE(SUM(t.amount), 0)
+        FROM transfers t
+        JOIN wallets w ON w.id = t.receiver_wallet_id
+        JOIN transactions trx ON trx.id = t.transaction_id
+        WHERE w.user_id = 17 AND trx.status = 'success'
+    ) 
+    +
+    (
+        SELECT COALESCE(SUM(tp.amount), 0)
+        FROM topups tp
+        JOIN wallets w ON w.id = tp.wallet_id
+        JOIN transactions trx ON trx.id = tp.transaction_id
+        WHERE w.user_id = 17 AND trx.status = 'success'
+    ) AS grand_total_income,
+
+	(SELECT COALESCE(SUM(t.amount), 0)
+        FROM transfers t
+        JOIN wallets w ON w.id = t.sender_wallet_id
+        JOIN transactions trx ON trx.id = t.transaction_id
+        WHERE w.user_id = 17 AND trx.status = 'success') AS grand_total_expense, wallets.balance FROM wallets WHERE wallets.user_id = $1
+	`
+	var userDashboard model.WalletSummary
+	if err := wr.db.QueryRow(ctx, sql, userID).Scan(&userDashboard.Income, &userDashboard.Expense, &userDashboard.Balance); err != nil {
+		return model.WalletSummary{}, err
+	}
+
+	return userDashboard, nil
+
+}
