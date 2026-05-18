@@ -2,9 +2,13 @@ package service
 
 import (
 	"backend-golang/internal/dto"
+	errs "backend-golang/internal/err"
 	"backend-golang/internal/repository"
 	"context"
+	"errors"
 	"log"
+
+	"github.com/jackc/pgx/v5/pgconn"
 )
 
 type UserService struct {
@@ -34,9 +38,24 @@ func (us *UserService) GetUserProfile(ctx context.Context, id int) (dto.Profiles
 }
 
 func (us *UserService) EditProfile(ctx context.Context, id int, data dto.ProfileUpdateRequest) error {
-	log.Println(&data.FullName)
-	if err := us.userRepo.Edit(ctx, &data.FullName, &data.Photo, &data.Phone, id); err != nil {
-		return err
+	log.Println(data.FullName)
+	result, err := us.userRepo.Edit(ctx, &data.FullName, &data.Photo, &data.Phone, id)
+	if err != nil {
+		var pgErr *pgconn.PgError
+		if errors.As(err, &pgErr) {
+			switch pgErr.Code {
+			case "23505": // Kode Postgres untuk Unique Violation
+				return errs.ErrPhoneAlreadyUsed
+			case "22001": // Kode Postgres untuk String Data Right Truncation (input terlalu panjang)
+				return errs.ErrInvalidInput
+			}
+		}
+		// Error database lainnya (koneksi putus, dll)
+		return errs.ErrInternalServer
+	}
+
+	if result == 0 {
+		return errs.ErrProfileNotFound
 	}
 	return nil
 }

@@ -36,7 +36,7 @@ func (ur *UserRepository) GetProfile(ctx context.Context, id int) (model.Profile
 	return user, nil
 }
 
-func (ur *UserRepository) Edit(ctx context.Context, full_name, photo, phone *string, userID int) error {
+func (ur *UserRepository) Edit(ctx context.Context, full_name, photo, phone *string, userID int) (int64, error) {
 	log.Println(userID, *full_name)
 	sql := `
 UPDATE profiles
@@ -46,10 +46,11 @@ SET
 	phone = $3
 WHERE user_id = $4
 `
-	if _, err := ur.db.Exec(ctx, sql, *full_name, *photo, *phone, userID); err != nil {
-		return err
+	commandTag, err := ur.db.Exec(ctx, sql, *full_name, *photo, *phone, userID)
+	if err != nil {
+		return 0, err
 	}
-	return nil
+	return commandTag.RowsAffected(), nil
 }
 
 // func (ur *UserRepository) GetDashboard(ctx context.Context, id int)
