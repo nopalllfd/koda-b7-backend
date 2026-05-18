@@ -7,8 +7,6 @@ import (
 	"context"
 	"errors"
 	"log"
-
-	"github.com/jackc/pgx/v5/pgconn"
 )
 
 type UserService struct {
@@ -41,17 +39,11 @@ func (us *UserService) EditProfile(ctx context.Context, id int, data dto.Profile
 	log.Println(data.FullName)
 	result, err := us.userRepo.Edit(ctx, &data.FullName, &data.Photo, &data.Phone, id)
 	if err != nil {
-		var pgErr *pgconn.PgError
-		if errors.As(err, &pgErr) {
-			switch pgErr.Code {
-			case "23505": // Kode Postgres untuk Unique Violation
-				return errs.ErrPhoneAlreadyUsed
-			case "22001": // Kode Postgres untuk String Data Right Truncation (input terlalu panjang)
-				return errs.ErrInvalidInput
-			}
+		if errors.Is(err, errs.ErrInternalServer) {
+			log.Printf("[ERROR] database failure during registration: %v", err)
+			return err
 		}
-		// Error database lainnya (koneksi putus, dll)
-		return errs.ErrInternalServer
+		return err
 	}
 
 	if result == 0 {

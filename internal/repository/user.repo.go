@@ -1,10 +1,13 @@
 package repository
 
 import (
+	errs "backend-golang/internal/err"
 	"backend-golang/internal/model"
 	"context"
+	"errors"
 	"log"
 
+	"github.com/jackc/pgx/v5/pgconn"
 	"github.com/jackc/pgx/v5/pgxpool"
 )
 
@@ -48,7 +51,17 @@ WHERE user_id = $4
 `
 	commandTag, err := ur.db.Exec(ctx, sql, *full_name, *photo, *phone, userID)
 	if err != nil {
-		return 0, err
+		var pgErr *pgconn.PgError
+		if errors.As(err, &pgErr) {
+			switch pgErr.Code {
+			case "23505": // Kode Postgres untuk Unique Violation
+				return 0, errs.ErrPhoneAlreadyUsed
+			case "22001": // Kode Postgres untuk String Data Right Truncation (input terlalu panjang)
+				return 0, errs.ErrInvalidInput
+			}
+		}
+		// Error database lainnya (koneksi putus, dll)
+		return 0, errs.ErrInternalServer
 	}
 	return commandTag.RowsAffected(), nil
 }

@@ -14,4 +14,9 @@ var (
 	ErrInvalidCredential = errors.New("invalid credential")
 	ErrEmailNotFound     = errors.New("email not found")
 	ErrExistingEmail     = errors.New("email has been registered")
+
+	ErrUserAlreadyHasWallet = errors.New("user sudah memiliki dompet")
+	ErrUserNotFound         = errors.New("user tidak ditemukan")
+	ErrInvalidBalance       = errors.New("saldo tidak valid")
+	ErrTimeoutOrCanceled    = errors.New("proses dibatalkan atau waktu habis")
 )
