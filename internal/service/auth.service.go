@@ -114,19 +114,26 @@ func (as *AuthService) CheckPassword(ctx context.Context, pwd string, id int) er
 	if err != nil {
 		return errs.ErrInternalServer
 	}
-	var hc *pkg.HashConfig
+
+	var hc pkg.HashConfig
+
 	if err := hc.Compare(pwd, oldPwd); err != nil {
 		return errs.ErrInvalidPassword
 	}
+
 	return nil
 }
 
 func (as *AuthService) ChangePassword(ctx context.Context, req dto.ChangePasswordRequest) error {
 	var hc pkg.HashConfig
+
 	hc.OwaspRecomendedHashConfig()
-	hashedPwd := hc.Hash(req.Password)
+
+	hashedPwd := hc.Hash(req.NewPassword)
+
 	if err := as.authRepo.SetPassword(ctx, hashedPwd, req.Id); err != nil {
 		return errs.ErrInternalServer
 	}
+
 	return nil
 }

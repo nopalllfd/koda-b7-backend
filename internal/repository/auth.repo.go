@@ -76,7 +76,7 @@ func (ar *AuthRepository) SetPin(ctx context.Context, pin string, id int) error 
 	return nil
 }
 func (ar *AuthRepository) GetUserPassword(ctx context.Context, id int) (string, error) {
-	sql := `SELECT password FROM users WHERE password = $1
+	sql := `SELECT password FROM users WHERE id = $1
 	)`
 	var userPassword string
 	if err := ar.db.QueryRow(ctx, sql, id).Scan(&userPassword); err != nil {

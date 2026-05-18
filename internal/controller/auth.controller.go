@@ -165,33 +165,37 @@ func (ac *AuthController) UpdateUserPin(ctx *gin.Context) {
 func (ac *AuthController) UpdateUserPassword(ctx *gin.Context) {
 	token, _ := ctx.Get("claims")
 	claims := token.(pkg.Claims)
-	var user dto.ChangePasswordRequest
-	if err := ctx.ShouldBindBodyWith(&user, binding.JSON); err != nil {
-		if strings.Contains(err.Error(), "required") {
-			utils.SendResponse(ctx, http.StatusBadRequest, false, "password is required", nil, err)
-			return
-		}
-		if strings.Contains(err.Error(), "min") {
-			utils.SendResponse(ctx, http.StatusBadRequest, false, "password must be at least 8 characters", nil, err)
-			return
-		}
-		utils.SendResponse(ctx, http.StatusBadRequest, false, "invalid request body", nil, err.Error())
-		return
-	}
 
-	if err := ac.authService.CheckPassword(ctx, user.Password, user.Id); err != nil {
-		if errors.Is(err, errs.ErrInvalidPassword) {
-			utils.SendResponse(ctx, http.StatusBadRequest, false, "update password failed", nil, err.Error())
-			return
-		}
-		utils.SendResponse(ctx, http.StatusInternalServerError, false, "update password failed", nil, err.Error())
+	var user dto.ChangePasswordRequest
+
+	if err := ctx.ShouldBindJSON(&user); err != nil {
+		utils.SendResponse(ctx, http.StatusBadRequest, false, "invalid request", nil, err.Error())
 		return
 	}
 
 	user.Id = claims.Id
+
+	// check old password
+	if err := ac.authService.CheckPassword(
+		ctx.Request.Context(),
+		user.OldPassword,
+		user.Id,
+	); err != nil {
+
+		if errors.Is(err, errs.ErrInvalidPassword) {
+			utils.SendResponse(ctx, http.StatusBadRequest, false, "old password invalid", nil, err.Error())
+			return
+		}
+
+		utils.SendResponse(ctx, http.StatusInternalServerError, false, "update password failed", nil, err.Error())
+		return
+	}
+
+	// update new password
 	if err := ac.authService.ChangePassword(ctx.Request.Context(), user); err != nil {
 		utils.SendResponse(ctx, http.StatusInternalServerError, false, "update password failed", nil, err.Error())
 		return
 	}
-	utils.SendResponse(ctx, http.StatusOK, true, "update pin success", nil, nil)
+
+	utils.SendResponse(ctx, http.StatusOK, true, "update password success", nil, nil)
 }

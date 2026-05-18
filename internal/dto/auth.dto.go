@@ -26,6 +26,7 @@ type UserPIN struct {
 }
 
 type ChangePasswordRequest struct {
-	Id       int    `json:"id"`
-	Password string `json:"password" binding:"required,min=8"`
+	Id          int
+	OldPassword string `json:"old_password" binding:"required,min=8"`
+	NewPassword string `json:"new_password" binding:"required,min=8"`
 }
