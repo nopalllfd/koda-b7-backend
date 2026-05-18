@@ -24,12 +24,12 @@ func NewAuthRepo(db *pgxpool.Pool) *AuthRepository {
 
 func (ar *AuthRepository) GetUserByEmail(ctx context.Context, email string) (*model.User, error) {
 	// definisiin
-	sql := `SELECT id, email, password
+	sql := `SELECT id, email, password, pin
 	FROM users
 	WHERE email = $1`
 	// ngeeksekusi query
 	var user model.User
-	err := ar.db.QueryRow(ctx, sql, email).Scan(&user.Id, &user.Email, &user.Password)
+	err := ar.db.QueryRow(ctx, sql, email).Scan(&user.Id, &user.Email, &user.Password, &user.Pin)
 	if err != nil {
 		fmt.Println(err)
 		return nil, fmt.Errorf(

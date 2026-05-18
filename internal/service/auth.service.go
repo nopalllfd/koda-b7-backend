@@ -52,9 +52,12 @@ func (as *AuthService) Login(ctx context.Context, req dto.LoginRequest) (*dto.Lo
 		return nil, err
 	}
 
+	isTokenExists := len(existingUser.Pin) > 0
+
 	result := &dto.LoginResponse{
-		Email: existingUser.Email,
-		Token: token,
+		DisplayName: existingUser.Email,
+		IsPinExists: isTokenExists,
+		Token:       token,
 	}
 
 	log.Println("SETELAH GEN JWT:", token)

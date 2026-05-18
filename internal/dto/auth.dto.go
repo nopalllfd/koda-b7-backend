@@ -10,8 +10,10 @@ type RegisterRequest struct {
 }
 
 type LoginResponse struct {
-	Email string `json:"email"`
-	Token string `json:"token"`
+	DisplayName string `json:"display_name"`
+	Photo       string `json:"photo"`
+	IsPinExists bool   `json:"isPinExists"`
+	Token       string `json:"token"`
 }
 
 type AddPinRequest struct {
