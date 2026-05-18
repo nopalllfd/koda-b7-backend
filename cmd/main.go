@@ -26,6 +26,6 @@ func main() {
 	defer db.Close()
 
 	// route
-	router.SetupRouter(app, db)
+	router.InitRoutes(app, db)
 	app.Run("localhost:5000")
 }
