@@ -2,6 +2,7 @@ package service
 
 import (
 	"backend-golang/internal/dto"
+	errs "backend-golang/internal/err"
 	"backend-golang/internal/repository"
 	"context"
 )
@@ -19,7 +20,7 @@ func NewWalletService(walletRepo *repository.WalletRepository) *WalletService {
 func (ws *WalletService) GetDashboard(ctx context.Context, userID int) (dto.DashboardUser, error) {
 	data, err := ws.walletRepo.GetDashboard(ctx, userID)
 	if err != nil {
-		return dto.DashboardUser{}, err
+		return dto.DashboardUser{}, errs.ErrInternalServer
 	}
 	dataDashboard := dto.DashboardUser{
 		Balance: data.Balance,

@@ -27,7 +27,7 @@ func (wc *WalletController) GetDashboard(ctx *gin.Context) {
 	user, err := wc.walletService.GetDashboard(ctx.Request.Context(), claims.Id)
 	if err != nil {
 		log.Println(err.Error())
-		utils.SendResponse(ctx, http.StatusInternalServerError, false, "internal server error", nil, err.Error())
+		utils.SendResponse(ctx, http.StatusInternalServerError, false, "get dashboard failed", nil, err.Error())
 		return
 	}
 	utils.SendResponse(ctx, http.StatusOK, true, "ok", user, nil)

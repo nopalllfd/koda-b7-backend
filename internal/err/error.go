@@ -7,19 +7,20 @@ var ErrInternalServer = errors.New(
 )
 
 var (
-	ErrProfileNotFound  = errors.New("profil tidak ditemukan")
-	ErrPhoneAlreadyUsed = errors.New("nomor telepon sudah terdaftar")
-	ErrInvalidInput     = errors.New("data yang dimasukkan salah")
+	ErrProfileNotFound  = errors.New("profile not found")
+	ErrPhoneAlreadyUsed = errors.New("phone number already registered")
+	ErrInvalidInput     = errors.New("invalid input")
 
-	ErrInvalidCredential = errors.New("invalid credential")
+	ErrInvalidCredential = errors.New("invalid email or password")
+	ErrInvalidPassword   = errors.New("invalid password")
 	ErrEmailNotFound     = errors.New("email not found")
-	ErrExistingEmail     = errors.New("email has been registered")
+	ErrExistingEmail     = errors.New("email already registered")
 
-	ErrUserAlreadyHasWallet = errors.New("user sudah memiliki dompet")
-	ErrUserNotFound         = errors.New("user tidak ditemukan")
-	ErrInvalidBalance       = errors.New("saldo tidak valid")
-	ErrTimeoutOrCanceled    = errors.New("proses dibatalkan atau waktu habis")
+	ErrUserAlreadyHasWallet = errors.New("user already has wallet")
+	ErrUserNotFound         = errors.New("user not found")
+	ErrInvalidBalance       = errors.New("invalid balance")
+	ErrTimeoutOrCanceled    = errors.New("request timed out or canceled")
 
-	ErrPINNotSet  = errors.New("user belum mengatur PIN")
-	ErrInvalidPin = errors.New("pin salah")
+	ErrPINNotSet  = errors.New("pin is not set")
+	ErrInvalidPin = errors.New("invalid pin")
 )

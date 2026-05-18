@@ -29,6 +29,9 @@ func (tr *TransactionRepository) GetPinByUserId(ctx context.Context, id int) (st
 		}
 		return "", err
 	}
+	if pin == "" {
+		return "", errs.ErrPINNotSet
+	}
 	log.Println("Ini log", pin)
 	return pin, nil
 }

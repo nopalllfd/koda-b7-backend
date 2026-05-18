@@ -2,9 +2,11 @@ package controller
 
 import (
 	"backend-golang/internal/dto"
+	errs "backend-golang/internal/err"
 	"backend-golang/internal/service"
 	"backend-golang/pkg"
 	"backend-golang/pkg/utils"
+	"errors"
 	"net/http"
 
 	"github.com/gin-gonic/gin"
@@ -26,11 +28,19 @@ func (tc *TransactionController) CheckPin(ctx *gin.Context) {
 	claims := token.(pkg.Claims)
 	var user dto.UserPIN
 	if err := ctx.ShouldBindBodyWith(&user, binding.JSON); err != nil {
-		utils.SendResponse(ctx, http.StatusInternalServerError, false, "Internal Server Error", nil, err.Error())
+		utils.SendResponse(ctx, http.StatusBadRequest, false, "invalid request body", nil, err.Error())
 		return
 	}
 	if err := tc.transactionService.CheckPin(ctx.Request.Context(), claims.Id, user.Pin); err != nil {
-		utils.SendResponse(ctx, http.StatusInternalServerError, false, "error", nil, err.Error())
+		if errors.Is(err, errs.ErrUserNotFound) {
+			utils.SendResponse(ctx, http.StatusNotFound, false, "check pin failed", nil, err.Error())
+			return
+		}
+		if errors.Is(err, errs.ErrPINNotSet) || errors.Is(err, errs.ErrInvalidPin) {
+			utils.SendResponse(ctx, http.StatusBadRequest, false, "check pin failed", nil, err.Error())
+			return
+		}
+		utils.SendResponse(ctx, http.StatusInternalServerError, false, "check pin failed", nil, err.Error())
 		return
 	}
 	utils.SendResponse(ctx, http.StatusOK, true, "your pin is valid", nil, nil)

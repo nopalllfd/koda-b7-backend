@@ -22,6 +22,12 @@ func NewUserService(userRepo *repository.UserRepository) *UserService {
 func (us *UserService) GetUserProfile(ctx context.Context, id int) (dto.Profiles, error) {
 	result, err := us.userRepo.GetProfile(ctx, id)
 	if err != nil {
+		if errors.Is(err, errs.ErrProfileNotFound) {
+			return dto.Profiles{}, err
+		}
+		if errors.Is(err, errs.ErrInternalServer) {
+			return dto.Profiles{}, err
+		}
 		return dto.Profiles{}, err
 	}
 
@@ -39,11 +45,11 @@ func (us *UserService) EditProfile(ctx context.Context, id int, data dto.Profile
 	log.Println(data.FullName)
 	result, err := us.userRepo.Edit(ctx, &data.FullName, &data.Photo, &data.Phone, id)
 	if err != nil {
-		if errors.Is(err, errs.ErrInternalServer) {
+		if errors.Is(err, errs.ErrPhoneAlreadyUsed) || errors.Is(err, errs.ErrInvalidInput) || errors.Is(err, errs.ErrInternalServer) {
 			log.Printf("[ERROR] database failure during registration: %v", err)
 			return err
 		}
-		return err
+		return errs.ErrInternalServer
 	}
 
 	if result == 0 {

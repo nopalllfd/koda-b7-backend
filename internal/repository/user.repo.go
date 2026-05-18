@@ -7,6 +7,7 @@ import (
 	"errors"
 	"log"
 
+	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgconn"
 	"github.com/jackc/pgx/v5/pgxpool"
 )
@@ -34,7 +35,10 @@ func (ur *UserRepository) GetProfile(ctx context.Context, id int) (model.Profile
 
 	var user model.Profile
 	if err := ur.db.QueryRow(ctx, sql, id).Scan(&user.User_id, &user.FullName, &user.Photo, &user.Phone); err != nil {
-		return model.Profile{}, err
+		if errors.Is(err, pgx.ErrNoRows) {
+			return model.Profile{}, errs.ErrProfileNotFound
+		}
+		return model.Profile{}, errs.ErrInternalServer
 	}
 	return user, nil
 }

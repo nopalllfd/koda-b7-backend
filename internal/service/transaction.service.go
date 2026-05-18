@@ -5,6 +5,7 @@ import (
 	"backend-golang/internal/repository"
 	"backend-golang/pkg"
 	"context"
+	"errors"
 	"log"
 )
 
@@ -23,7 +24,10 @@ func (ts *TransactionService) CheckPin(ctx context.Context, userID int, pin stri
 	hc.OwaspRecomendedHashConfig()
 	existingPin, err := ts.transactionRepo.GetPinByUserId(ctx, userID)
 	if err != nil {
-		return err
+		if errors.Is(err, errs.ErrUserNotFound) || errors.Is(err, errs.ErrPINNotSet) {
+			return err
+		}
+		return errs.ErrInternalServer
 	}
 
 	log.Println("ini pin awal", pin)

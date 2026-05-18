@@ -33,7 +33,7 @@ func (as *AuthService) Login(ctx context.Context, req dto.LoginRequest) (*dto.Lo
 		if errors.Is(err, pgx.ErrNoRows) {
 			return nil, errs.ErrEmailNotFound
 		}
-		return nil, err
+		return nil, errs.ErrInternalServer
 	}
 	log.Println("HABIS GET USER BY MAIL")
 
@@ -49,7 +49,7 @@ func (as *AuthService) Login(ctx context.Context, req dto.LoginRequest) (*dto.Lo
 	claims := pkg.NewClaims(existingUser.Id, req.Email)
 	token, err := claims.GenJWT()
 	if err != nil {
-		return nil, err
+		return nil, errs.ErrInternalServer
 	}
 
 	isTokenExists := len(existingUser.Pin) > 0
@@ -87,13 +87,13 @@ func (as *AuthService) Register(ctx context.Context, req dto.RegisterRequest) er
 
 	if err := as.userRepo.Create(ctx, userID, nil, nil, nil); err != nil {
 		log.Println("PROFILE ERROR:", err)
-		return err
+		return errs.ErrInternalServer
 	}
 
 	log.Println("PROFILE CREATED")
 	if err := as.walletRepo.Create(ctx, userID, 0); err != nil {
 		log.Println("WALLET ERROR:", err)
-		return err
+		return errs.ErrInternalServer
 	}
 
 	return nil
@@ -104,7 +104,7 @@ func (as *AuthService) SetPin(ctx context.Context, req dto.AddPinRequest) error 
 	hc.OwaspRecomendedHashConfig()
 	hashedPin := hc.Hash(req.Pin)
 	if err := as.authRepo.SetPin(ctx, hashedPin, req.UserID); err != nil {
-		return err
+		return errs.ErrInternalServer
 	}
 	return nil
 }
@@ -112,11 +112,11 @@ func (as *AuthService) SetPin(ctx context.Context, req dto.AddPinRequest) error 
 func (as *AuthService) CheckPassword(ctx context.Context, pwd string, id int) error {
 	oldPwd, err := as.authRepo.GetUserPassword(ctx, id)
 	if err != nil {
-		return err
+		return errs.ErrInternalServer
 	}
 	var hc *pkg.HashConfig
 	if err := hc.Compare(pwd, oldPwd); err != nil {
-		return err
+		return errs.ErrInvalidPassword
 	}
 	return nil
 }
@@ -126,7 +126,7 @@ func (as *AuthService) ChangePassword(ctx context.Context, req dto.ChangePasswor
 	hc.OwaspRecomendedHashConfig()
 	hashedPwd := hc.Hash(req.Password)
 	if err := as.authRepo.SetPassword(ctx, hashedPwd, req.Id); err != nil {
-		return err
+		return errs.ErrInternalServer
 	}
 	return nil
 }
