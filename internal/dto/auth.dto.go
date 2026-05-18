@@ -18,7 +18,7 @@ type LoginResponse struct {
 
 type AddPinRequest struct {
 	UserID int    `json:"user_id"`
-	Pin    string `json:"pin"`
+	Pin    string `json:"pin" binding:"required,min=6"`
 }
 
 type UserPIN struct {

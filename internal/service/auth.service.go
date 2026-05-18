@@ -99,11 +99,11 @@ func (as *AuthService) Register(ctx context.Context, req dto.RegisterRequest) er
 	return nil
 }
 
-func (as *AuthService) AddPin(ctx context.Context, req dto.AddPinRequest) error {
+func (as *AuthService) SetPin(ctx context.Context, req dto.AddPinRequest) error {
 	var hc pkg.HashConfig
 	hc.OwaspRecomendedHashConfig()
 	hashedPin := hc.Hash(req.Pin)
-	if err := as.authRepo.CreatePin(ctx, hashedPin, req.UserID); err != nil {
+	if err := as.authRepo.SetPin(ctx, hashedPin, req.UserID); err != nil {
 		return err
 	}
 	return nil

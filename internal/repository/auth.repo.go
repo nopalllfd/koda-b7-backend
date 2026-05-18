@@ -65,7 +65,7 @@ func (ar *AuthRepository) Create(ctx context.Context, email string, password str
 	return userId, nil
 }
 
-func (ar *AuthRepository) CreatePin(ctx context.Context, pin string, id int) error {
+func (ar *AuthRepository) SetPin(ctx context.Context, pin string, id int) error {
 	sql := `UPDATE users
 	SET pin = $1
 	WHERE id = $2
@@ -75,5 +75,6 @@ func (ar *AuthRepository) CreatePin(ctx context.Context, pin string, id int) err
 	}
 	return nil
 }
+
 
 // func (ar *AuthRepository) GetPin(ctx )

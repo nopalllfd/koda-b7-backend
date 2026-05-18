@@ -4,6 +4,7 @@ import (
 	"backend-golang/internal/dto"
 	errs "backend-golang/internal/err"
 	"backend-golang/internal/service"
+	"backend-golang/pkg"
 	"backend-golang/pkg/utils"
 	"errors"
 	"net/http"
@@ -109,13 +110,33 @@ func (ac *AuthController) Register(ctx *gin.Context) {
 	utils.SendResponse(ctx, http.StatusCreated, true, "register success", nil, nil)
 }
 
-func (ac *AuthController) AddPin(ctx *gin.Context) {
+func (ac *AuthController) SetUserPin(ctx *gin.Context) {
 	var user dto.AddPinRequest
 	if err := ctx.ShouldBindBodyWith(&user, binding.JSON); err != nil {
 		utils.SendResponse(ctx, http.StatusInternalServerError, false, "internal Server Error", nil, err)
 		return
 	}
-	ac.authService.AddPin(ctx.Request.Context(), user)
-	utils.SendResponse(ctx, http.StatusCreated, true, "add pin success", nil, nil)
+	ac.authService.SetPin(ctx.Request.Context(), user)
+	utils.SendResponse(ctx, http.StatusCreated, true, "set pin success", nil, nil)
 
+}
+
+func (ac *AuthController) UpdateUserPin(ctx *gin.Context) {
+	token, _ := ctx.Get("claims")
+	claims := token.(pkg.Claims)
+	var user dto.AddPinRequest
+	if err := ctx.ShouldBindBodyWith(&user, binding.JSON); err != nil {
+		if strings.Contains(err.Error(), "min") {
+			utils.SendResponse(ctx, http.StatusBadRequest, false, "pin must be 6 of length", nil, err)
+			return
+		}
+		utils.SendResponse(ctx, http.StatusInternalServerError, false, "Internal Server Error", nil, err.Error())
+		return
+	}
+	user.UserID = claims.Id
+	if err := ac.authService.SetPin(ctx.Request.Context(), user); err != nil {
+		utils.SendResponse(ctx, http.StatusInternalServerError, false, "error", nil, err.Error())
+		return
+	}
+	utils.SendResponse(ctx, http.StatusOK, true, "update pin success", nil, nil)
 }
