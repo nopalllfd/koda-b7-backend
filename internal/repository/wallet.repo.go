@@ -36,7 +36,7 @@ func (wr *WalletRepository) GetDashboard(ctx context.Context, userID int) (model
         FROM transfers t
         JOIN wallets w ON w.id = t.receiver_wallet_id
         JOIN transactions trx ON trx.id = t.transaction_id
-        WHERE w.user_id = 17 AND trx.status = 'success'
+        WHERE w.user_id = $1 AND trx.status = 'success'
     ) 
     +
     (
@@ -44,7 +44,7 @@ func (wr *WalletRepository) GetDashboard(ctx context.Context, userID int) (model
         FROM topups tp
         JOIN wallets w ON w.id = tp.wallet_id
         JOIN transactions trx ON trx.id = tp.transaction_id
-        WHERE w.user_id = 17 AND trx.status = 'success'
+        WHERE w.user_id = $1 AND trx.status = 'success'
     ) AS grand_total_income,
 
 	(SELECT COALESCE(SUM(t.amount), 0)
