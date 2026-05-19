@@ -52,11 +52,11 @@ func (as *AuthService) Login(ctx context.Context, req dto.LoginRequest) (*dto.Lo
 		return nil, errs.ErrInternalServer
 	}
 
-	isTokenExists := len(existingUser.Pin) > 0
+	IsPinExists := len(existingUser.Pin) > 0
 
 	result := &dto.LoginResponse{
 		DisplayName: existingUser.Email,
-		IsPinExists: isTokenExists,
+		IsPinExists: IsPinExists,
 		Token:       token,
 	}
 
