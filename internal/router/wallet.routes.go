@@ -10,7 +10,7 @@ import (
 	"github.com/jackc/pgx/v5/pgxpool"
 )
 
-func SetupUserWallet(r *gin.RouterGroup, app *gin.Engine, db *pgxpool.Pool) {
+func SetupUserWallet(app *gin.Engine, db *pgxpool.Pool) {
 	WalletRepo := repository.NewWalletRepo(db)
 	WalletService := service.NewWalletService(WalletRepo)
 	WalletController := controller.NewWalletController(WalletService)

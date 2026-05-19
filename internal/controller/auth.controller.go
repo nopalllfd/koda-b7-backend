@@ -175,7 +175,7 @@ func (ac *AuthController) UpdateUserPassword(ctx *gin.Context) {
 	}
 
 	user.Id = claims.Id
-	log.Println("cek pw controller")
+	log.Println("cek pw controller ")
 
 	// check old password
 	if err := ac.authService.CheckPassword(

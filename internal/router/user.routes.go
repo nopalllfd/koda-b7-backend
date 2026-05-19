@@ -10,7 +10,7 @@ import (
 	"github.com/jackc/pgx/v5/pgxpool"
 )
 
-func SetupUserRoute(r *gin.RouterGroup, app *gin.Engine, db *pgxpool.Pool) {
+func SetupUserRoute(app *gin.Engine, db *pgxpool.Pool) {
 	UserRepo := repository.NewUserRepo(db)
 	UserService := service.NewUserService(UserRepo)
 	UserController := controller.NewUserController(UserService)

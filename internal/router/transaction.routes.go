@@ -10,7 +10,7 @@ import (
 	"github.com/jackc/pgx/v5/pgxpool"
 )
 
-func SetupTransactionRoute(r *gin.RouterGroup, app *gin.Engine, db *pgxpool.Pool) {
+func SetupTransactionRoute(app *gin.Engine, db *pgxpool.Pool) {
 	TransactionRepo := repository.NewTransactionRepo(db)
 	TransactionService := service.NewTransactionService(TransactionRepo)
 	TransactionController := controller.NewTransactionController(TransactionService)

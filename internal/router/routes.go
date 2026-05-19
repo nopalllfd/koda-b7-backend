@@ -9,12 +9,10 @@ import (
 
 func InitRoutes(app *gin.Engine, db *pgxpool.Pool) {
 	app.Use(middleware.CORSMiddleware)
-	api := app.Group("/api")
-	{
-		SetupAuthRoute(api, app, db)
-		SetupUserRoute(api, app, db)
-		SetupTransactionRoute(api, app, db)
-		SetupUserWallet(api, app, db)
-	}
+
+	SetupAuthRoute(app, db)
+	SetupUserRoute(app, db)
+	SetupTransactionRoute(app, db)
+	SetupUserWallet(app, db)
 
 }

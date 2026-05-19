@@ -10,7 +10,7 @@ import (
 	"github.com/jackc/pgx/v5/pgxpool"
 )
 
-func SetupAuthRoute(r *gin.RouterGroup, app *gin.Engine, db *pgxpool.Pool) {
+func SetupAuthRoute(app *gin.Engine, db *pgxpool.Pool) {
 	UserRepo := repository.NewUserRepo(db)
 	WalletRepo := repository.NewWalletRepo(db)
 	AuthRepo := repository.NewAuthRepo(db)
