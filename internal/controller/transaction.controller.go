@@ -45,3 +45,52 @@ func (tc *TransactionController) CheckPin(ctx *gin.Context) {
 	}
 	utils.SendResponse(ctx, http.StatusOK, true, "your pin is valid", nil, nil)
 }
+
+func (tc *TransactionController) GetAllUserTransaction(ctx *gin.Context) {
+	token, _ := ctx.Get("claims")
+	claims := token.(pkg.Claims)
+	transactionsHistory, err := tc.transactionService.GetAllUserTransaction(ctx.Request.Context(), claims.Id)
+	if err != nil {
+		utils.SendResponse(ctx, http.StatusBadRequest, false, "failed to get all transactions", nil, err.Error())
+	}
+
+	utils.SendResponse(ctx, http.StatusOK, true, "success to get all transactions", transactionsHistory, nil)
+}
+
+func (tc *TransactionController) Topup(ctx *gin.Context) {
+	var input dto.TopupRequest
+
+	if err := ctx.ShouldBindJSON(&input); err != nil {
+		utils.SendResponse(ctx, http.StatusBadRequest, false, errs.ErrInvalidInput.Error(), nil, err.Error())
+		return
+	}
+
+	result, err := tc.transactionService.CreateTopup(ctx.Request.Context(), input)
+	if err != nil {
+		utils.SendResponse(ctx, http.StatusInternalServerError, false, errs.ErrInternalServer.Error(), nil, err.Error())
+		return
+	}
+
+	utils.SendResponse(ctx, http.StatusOK, true, "topup successful", result, nil)
+}
+
+func (tc *TransactionController) Transfer(ctx *gin.Context) {
+	var input dto.TransferRequest
+
+	if err := ctx.ShouldBindJSON(&input); err != nil {
+		utils.SendResponse(ctx, http.StatusBadRequest, false, errs.ErrInvalidInput.Error(), nil, err.Error())
+		return
+	}
+
+	result, err := tc.transactionService.CreateTransfer(ctx.Request.Context(), input)
+	if err != nil {
+		statusCode := http.StatusInternalServerError
+		if errors.Is(err, errs.ErrSameWalletTransfer) || errors.Is(err, errs.ErrInsufficientBalance) {
+			statusCode = http.StatusBadRequest
+		}
+		utils.SendResponse(ctx, statusCode, false, err.Error(), nil, err.Error())
+		return
+	}
+
+	utils.SendResponse(ctx, http.StatusOK, true, "transfer successful", result, nil)
+}

@@ -23,4 +23,13 @@ var (
 
 	ErrPINNotSet  = errors.New("pin is not set")
 	ErrInvalidPin = errors.New("invalid pin")
+
+	ErrWalletNotFound      = errors.New("wallet not found")
+	ErrTransactionFailed   = errors.New("transaction failed")
+	ErrTopupFailed         = errors.New("topup failed")
+	ErrUpdateBalanceFailed = errors.New("failed to update balance")
+
+	ErrSameWalletTransfer  = errors.New("cannot transfer to the same wallet")
+	ErrInsufficientBalance = errors.New("insufficient balance")
+	ErrTransferFailed      = errors.New("transfer failed")
 )

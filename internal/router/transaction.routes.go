@@ -11,12 +11,13 @@ import (
 )
 
 func SetupTransactionRoute(app *gin.Engine, db *pgxpool.Pool) {
-	TransactionRepo := repository.NewTransactionRepo(db)
-	TransactionService := service.NewTransactionService(TransactionRepo)
+	TransactionRepo := repository.NewTransactionRepo()
+	TransactionService := service.NewTransactionService(TransactionRepo, db)
 	TransactionController := controller.NewTransactionController(TransactionService)
-	trx := app.Group("/transaction")
+	trx := app.Group("/transactions")
 	trx.Use(middleware.VerifyMiddleware)
 	{
 		trx.POST("/pin", middleware.VerifyMiddleware, TransactionController.CheckPin)
+		trx.GET("", middleware.VerifyMiddleware, TransactionController.GetAllUserTransaction)
 	}
 }
