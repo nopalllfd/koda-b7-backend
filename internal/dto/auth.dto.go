@@ -30,3 +30,21 @@ type ChangePasswordRequest struct {
 	OldPassword string `json:"old_password" binding:"required,min=8"`
 	NewPassword string `json:"new_password" binding:"required,min=8"`
 }
+
+type LoginSwaggerResponse struct {
+	Success bool          `json:"success"`
+	Message string        `json:"message"`
+	Data    LoginResponse `json:"data"`
+}
+
+type RegisterSwaggerResponse struct {
+	Success bool   `json:"success"`
+	Message string `json:"message"`
+	Data    any    `json:"data"`
+}
+
+type ErrorSwaggerResponse struct {
+	Success bool   `json:"success" example:"false"`
+	Message string `json:"message" example:"bad request"`
+	Error   string `json:"error,omitempty" example:"validation error"`
+}

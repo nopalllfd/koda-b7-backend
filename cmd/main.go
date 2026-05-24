@@ -12,6 +12,19 @@ import (
 	"github.com/joho/godotenv" //godotenv
 )
 
+// @title						Backend Koda 7
+// @version						1.0
+// @description					Backend created by Koda using Gin
+
+// @license.name				MIT
+
+// @host						localhost:5000
+// @BasePath					/
+
+// @securityDefinitions.apikey	ApiKeyAuth
+// @in							header
+// @name						Authorization
+// @description					Bearer token used for authorization
 func main() {
 	// init
 	err := godotenv.Load()

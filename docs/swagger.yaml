@@ -1,0 +1,269 @@
+basePath: /
+definitions:
+  dto.AddPinRequest:
+    properties:
+      pin:
+        minLength: 6
+        type: string
+      user_id:
+        type: integer
+    required:
+    - pin
+    type: object
+  dto.ChangePasswordRequest:
+    properties:
+      id:
+        type: integer
+      new_password:
+        minLength: 8
+        type: string
+      old_password:
+        minLength: 8
+        type: string
+    required:
+    - new_password
+    - old_password
+    type: object
+  dto.ErrorSwaggerResponse:
+    properties:
+      error:
+        example: validation error
+        type: string
+      message:
+        example: bad request
+        type: string
+      success:
+        example: false
+        type: boolean
+    type: object
+  dto.LoginRequest:
+    properties:
+      email:
+        type: string
+      password:
+        minLength: 8
+        type: string
+    required:
+    - email
+    - password
+    type: object
+  dto.LoginResponse:
+    properties:
+      display_name:
+        type: string
+      isPinExists:
+        type: boolean
+      photo:
+        type: string
+      token:
+        type: string
+    type: object
+  dto.LoginSwaggerResponse:
+    properties:
+      data:
+        $ref: '#/definitions/dto.LoginResponse'
+      message:
+        type: string
+      success:
+        type: boolean
+    type: object
+  dto.RegisterRequest:
+    properties:
+      email:
+        type: string
+      password:
+        minLength: 8
+        type: string
+    required:
+    - email
+    - password
+    type: object
+  dto.RegisterSwaggerResponse:
+    properties:
+      data: {}
+      message:
+        type: string
+      success:
+        type: boolean
+    type: object
+host: localhost:5000
+info:
+  contact: {}
+  description: Backend created by Koda using Gin
+  license:
+    name: MIT
+  title: Backend Koda 7
+  version: "1.0"
+paths:
+  /auth/login:
+    post:
+      consumes:
+      - application/json
+      description: login user using email and password
+      parameters:
+      - description: login payload
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/dto.LoginRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/dto.LoginSwaggerResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/dto.ErrorSwaggerResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/dto.ErrorSwaggerResponse'
+      summary: Login user
+      tags:
+      - auth
+  /auth/password:
+    patch:
+      consumes:
+      - application/json
+      description: change current user password
+      parameters:
+      - description: change password payload
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/dto.ChangePasswordRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/dto.RegisterSwaggerResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/dto.ErrorSwaggerResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/dto.ErrorSwaggerResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/dto.ErrorSwaggerResponse'
+      security:
+      - BearerAuth: []
+      summary: Update user password
+      tags:
+      - auth
+  /auth/pin:
+    patch:
+      consumes:
+      - application/json
+      description: update existing user PIN
+      parameters:
+      - description: pin payload
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/dto.AddPinRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/dto.RegisterSwaggerResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/dto.ErrorSwaggerResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/dto.ErrorSwaggerResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/dto.ErrorSwaggerResponse'
+      security:
+      - BearerAuth: []
+      summary: Update user PIN
+      tags:
+      - auth
+    post:
+      consumes:
+      - application/json
+      description: create PIN for user
+      parameters:
+      - description: pin payload
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/dto.AddPinRequest'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
+          schema:
+            $ref: '#/definitions/dto.RegisterSwaggerResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/dto.ErrorSwaggerResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/dto.ErrorSwaggerResponse'
+      summary: Set user PIN
+      tags:
+      - auth
+  /auth/register:
+    post:
+      consumes:
+      - application/json
+      description: register new user account
+      parameters:
+      - description: register payload
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/dto.RegisterRequest'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
+          schema:
+            $ref: '#/definitions/dto.RegisterSwaggerResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/dto.ErrorSwaggerResponse'
+        "409":
+          description: Conflict
+          schema:
+            $ref: '#/definitions/dto.ErrorSwaggerResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/dto.ErrorSwaggerResponse'
+      summary: Register user
+      tags:
+      - auth
+securityDefinitions:
+  ApiKeyAuth:
+    description: Bearer token used for authorization
+    in: header
+    name: Authorization
+    type: apiKey
+swagger: "2.0"
