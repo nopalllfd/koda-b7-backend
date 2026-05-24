@@ -41,19 +41,61 @@ func (us *UserService) GetUserProfile(ctx context.Context, id int) (dto.Profiles
 	}, nil
 }
 
-func (us *UserService) EditProfile(ctx context.Context, id int, data dto.ProfileUpdateRequest) error {
-	log.Println(data.FullName)
-	result, err := us.userRepo.Edit(ctx, &data.FullName, &data.Photo, &data.Phone, id)
-	if err != nil {
-		if errors.Is(err, errs.ErrPhoneAlreadyUsed) || errors.Is(err, errs.ErrInvalidInput) || errors.Is(err, errs.ErrInternalServer) {
-			log.Printf("[ERROR] database failure during registration: %v", err)
+func (us *UserService) EditProfile(
+	ctx context.Context,
+	userID int,
+	req dto.ProfileUpdateRequest,
+) error {
+
+	if req.Phone != "" {
+
+		exists, err := us.userRepo.FindByPhone(
+			ctx,
+			req.Phone,
+			userID,
+		)
+
+		if err != nil {
 			return err
 		}
-		return errs.ErrInternalServer
+
+		if exists {
+			return errs.ErrPhoneAlreadyUsed
+		}
 	}
 
-	if result == 0 {
+	var fullName *string
+	var phone *string
+	var photo *string
+
+	if req.FullName != "" {
+		fullName = &req.FullName
+	}
+
+	if req.Phone != "" {
+		phone = &req.Phone
+	}
+
+	if req.PhotoPath != "" {
+		photo = &req.PhotoPath
+	}
+
+	rowsAffected, err := us.userRepo.Edit(
+		ctx,
+		fullName,
+		photo,
+		phone,
+		userID,
+	)
+
+	if err != nil {
+		log.Println("SERVICE ERROR:", err)
+		return err
+	}
+
+	if rowsAffected == 0 {
 		return errs.ErrProfileNotFound
 	}
+
 	return nil
 }

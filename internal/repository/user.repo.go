@@ -43,31 +43,56 @@ func (ur *UserRepository) GetProfile(ctx context.Context, id int) (model.Profile
 	return user, nil
 }
 
-func (ur *UserRepository) Edit(ctx context.Context, full_name, photo, phone *string, userID int) (int64, error) {
-	log.Println(userID, *full_name)
+func (ur *UserRepository) Edit(
+	ctx context.Context,
+	fullName, photo, phone *string,
+	userID int,
+) (int64, error) {
+
 	sql := `
-UPDATE profiles
-SET
-	full_name = $1,
-	photo = $2,
-	phone = $3
-WHERE user_id = $4
-`
-	commandTag, err := ur.db.Exec(ctx, sql, *full_name, *photo, *phone, userID)
+	UPDATE profiles
+	SET
+		full_name = COALESCE($1, full_name),
+		photo = COALESCE($2, photo),
+		phone = COALESCE($3, phone)
+	WHERE user_id = $4
+	`
+
+	commandTag, err := ur.db.Exec(
+		ctx,
+		sql,
+		fullName,
+		photo,
+		phone,
+		userID,
+	)
+
 	if err != nil {
+
+		log.Println("REPO ERROR:", err)
+
 		var pgErr *pgconn.PgError
+
 		if errors.As(err, &pgErr) {
-			switch pgErr.Code {
-			case "23505": // Kode Postgres untuk Unique Violation
-				return 0, errs.ErrPhoneAlreadyUsed
-			case "22001": // Kode Postgres untuk String Data Right Truncation (input terlalu panjang)
-				return 0, errs.ErrInvalidInput
-			}
+			log.Println("PG ERROR:", pgErr.Code, pgErr.Message)
 		}
-		// Error database lainnya (koneksi putus, dll)
+
 		return 0, errs.ErrInternalServer
 	}
+
 	return commandTag.RowsAffected(), nil
 }
 
 // func (ur *UserRepository) GetDashboard(ctx context.Context, id int)
+func (ur *UserRepository) FindByPhone(ctx context.Context, phone string, userID int) (bool, error) {
+	sql := `SELECT EXISTS(SELECT 1 FROM profiles WHERE phone = $1
+		AND user_id != $2)`
+
+	var isExists bool
+
+	if err := ur.db.QueryRow(ctx, sql, phone, userID).Scan(&isExists); err != nil {
+		return false, err
+	}
+
+	return isExists, nil
+}

@@ -1,6 +1,9 @@
 package dto
 
-import "time"
+import (
+	"mime/multipart"
+	"time"
+)
 
 type Profiles struct {
 	User_id   int        `json:"user_id"`
@@ -12,9 +15,10 @@ type Profiles struct {
 }
 
 type ProfileUpdateRequest struct {
-	FullName string `json:"fullname"`
-	Photo    string `json:"photo"`
-	Phone    string `json:"phone"`
+	FullName  string                `form:"fullname" binding:"required"`
+	Phone     string                `form:"phone" binding:"required"`
+	Photo     *multipart.FileHeader `form:"photo"`
+	PhotoPath string                `json:"-"`
 }
 
 type ProfileSwaggerResponse struct {

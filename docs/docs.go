@@ -654,7 +654,7 @@ const docTemplate = `{
                 ],
                 "description": "update authenticated user profile",
                 "consumes": [
-                    "application/json"
+                    "multipart/form-data"
                 ],
                 "produces": [
                     "application/json"
@@ -665,13 +665,22 @@ const docTemplate = `{
                 "summary": "Edit user profile",
                 "parameters": [
                     {
-                        "description": "profile payload",
-                        "name": "body",
-                        "in": "body",
-                        "required": true,
-                        "schema": {
-                            "$ref": "#/definitions/dto.ProfileUpdateRequest"
-                        }
+                        "type": "string",
+                        "description": "full name",
+                        "name": "fullname",
+                        "in": "formData"
+                    },
+                    {
+                        "type": "string",
+                        "description": "phone number",
+                        "name": "phone",
+                        "in": "formData"
+                    },
+                    {
+                        "type": "file",
+                        "description": "profile photo",
+                        "name": "photo",
+                        "in": "formData"
                     }
                 ],
                 "responses": {
@@ -911,20 +920,6 @@ const docTemplate = `{
                 "success": {
                     "type": "boolean",
                     "example": true
-                }
-            }
-        },
-        "dto.ProfileUpdateRequest": {
-            "type": "object",
-            "properties": {
-                "fullname": {
-                    "type": "string"
-                },
-                "phone": {
-                    "type": "string"
-                },
-                "photo": {
-                    "type": "string"
                 }
             }
         },

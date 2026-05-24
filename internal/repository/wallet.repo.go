@@ -47,7 +47,7 @@ func (wr *WalletRepository) GetDashboard(ctx context.Context, userID int) (model
         JOIN transactions trx ON trx.id = t.transaction_id
         WHERE w.user_id = $1 
         AND trx.status = 'success'
-    ) AS grand_total_expense,
+    ) AS expense,
 
     wallets.balance
 

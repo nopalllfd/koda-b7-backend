@@ -108,15 +108,6 @@ definitions:
         example: true
         type: boolean
     type: object
-  dto.ProfileUpdateRequest:
-    properties:
-      fullname:
-        type: string
-      phone:
-        type: string
-      photo:
-        type: string
-    type: object
   dto.Profiles:
     properties:
       created_at:
@@ -696,15 +687,21 @@ paths:
       - user
     put:
       consumes:
-      - application/json
+      - multipart/form-data
       description: update authenticated user profile
       parameters:
-      - description: profile payload
-        in: body
-        name: body
-        required: true
-        schema:
-          $ref: '#/definitions/dto.ProfileUpdateRequest'
+      - description: full name
+        in: formData
+        name: fullname
+        type: string
+      - description: phone number
+        in: formData
+        name: phone
+        type: string
+      - description: profile photo
+        in: formData
+        name: photo
+        type: file
       produces:
       - application/json
       responses:

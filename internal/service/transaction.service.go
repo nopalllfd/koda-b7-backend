@@ -264,43 +264,58 @@ func (ts *TransactionService) GetPaymentMethods(ctx context.Context) ([]dto.Paym
 	return response, nil
 }
 
-func (ts *TransactionService) GetAllReceivers(ctx context.Context, query dto.TransactionQuery, userID int) (*dto.ReceiverPaginationResponse, error) {
-	data, total, err := ts.transactionRepo.GetReceiversWithPagination(ctx, ts.db, dto.TransactionQuery{
-		Page:   query.Page,
-		Limit:  query.Limit,
-		Search: query.Search,
-	}, userID)
+func (ts *TransactionService) GetAllReceivers(
+	ctx context.Context,
+	query dto.TransactionQuery,
+	userID int,
+) (*dto.ReceiverPaginationResponse, error) {
+
+	data, total, err := ts.transactionRepo.GetReceiversWithPagination(
+		ctx,
+		ts.db,
+		query,
+		userID,
+	)
+
 	if err != nil {
-		return nil, err
+		return nil, errs.ErrInternalServer
 	}
+
+	if len(data) == 0 {
+		return nil, errs.ErrNoReceiverFound
+	}
+
 	var response []dto.Receivers
+
 	for _, item := range data {
-		item := dto.Receivers{
+		response = append(response, dto.Receivers{
 			Id:       item.Id,
 			Photo:    item.Photo,
 			FullName: item.FullName,
 			Phone:    item.Phone,
-		}
-		response = append(response, item)
+		})
 	}
 
 	limit := query.Limit
 	if limit <= 0 {
 		limit = 10
 	}
+
 	if query.Page <= 0 {
 		query.Page = 1
 	}
+
 	totalPages := int(math.Ceil(float64(total) / float64(limit)))
 
 	result := dto.ReceiverPaginationResponse{
 		Data: response,
 		Meta: dto.PaginationMeta{
 			Page:       query.Page,
+			Limit:      limit,
 			Total:      total,
 			TotalPages: totalPages,
-			Limit:      limit,
 		},
 	}
+
 	return &result, nil
 }
