@@ -20,6 +20,11 @@ type TransactionPaginationResponse struct {
 	Meta PaginationMeta        `json:"meta"`
 }
 
+type ReceiverPaginationResponse struct {
+	Data []Receivers    `json:"data"`
+	Meta PaginationMeta `json:"meta"`
+}
+
 type TopupRequest struct {
 	MethodID int `json:"method_id"`
 	Amount   int `json:"amount"`
@@ -72,4 +77,17 @@ type PaymentMethods struct {
 	Id   int    `json:"id"`
 	Name string `json:"name"`
 	Logo string `json:"logo"`
+}
+
+type Receivers struct {
+	Id       int    `db:"id"`
+	Photo    string `db:"photo"`
+	FullName string `db:"full_name"`
+	Phone    string `db:"phone"`
+}
+
+type ReceiverSwaggerResponse struct {
+	Success bool                         `json:"success" example:"true"`
+	Message string                       `json:"message" example:"success to get all transactions"`
+	Data    []ReceiverPaginationResponse `json:"data"`
 }

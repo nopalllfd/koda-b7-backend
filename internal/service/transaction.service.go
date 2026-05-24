@@ -3,7 +3,6 @@ package service
 import (
 	"backend-golang/internal/dto"
 	errs "backend-golang/internal/err"
-	"backend-golang/internal/model"
 	"backend-golang/internal/repository"
 	"backend-golang/pkg"
 	"context"
@@ -51,7 +50,7 @@ func (ts *TransactionService) GetAllUserTransaction(ctx context.Context, userID 
 		ctx,
 		ts.db,
 		userID,
-		model.TransactionQuery{
+		dto.TransactionQuery{
 			Page:   query.Page,
 			Limit:  query.Limit,
 			Search: query.Search,
@@ -263,4 +262,45 @@ func (ts *TransactionService) GetPaymentMethods(ctx context.Context) ([]dto.Paym
 		response = append(response, method)
 	}
 	return response, nil
+}
+
+func (ts *TransactionService) GetAllReceivers(ctx context.Context, query dto.TransactionQuery, userID int) (*dto.ReceiverPaginationResponse, error) {
+	data, total, err := ts.transactionRepo.GetReceiversWithPagination(ctx, ts.db, dto.TransactionQuery{
+		Page:   query.Page,
+		Limit:  query.Limit,
+		Search: query.Search,
+	}, userID)
+	if err != nil {
+		return nil, err
+	}
+	var response []dto.Receivers
+	for _, item := range data {
+		item := dto.Receivers{
+			Id:       item.Id,
+			Photo:    item.Photo,
+			FullName: item.FullName,
+			Phone:    item.Phone,
+		}
+		response = append(response, item)
+	}
+
+	limit := query.Limit
+	if limit <= 0 {
+		limit = 10
+	}
+	if query.Page <= 0 {
+		query.Page = 1
+	}
+	totalPages := int(math.Ceil(float64(total) / float64(limit)))
+
+	result := dto.ReceiverPaginationResponse{
+		Data: response,
+		Meta: dto.PaginationMeta{
+			Page:       query.Page,
+			Total:      total,
+			TotalPages: totalPages,
+			Limit:      limit,
+		},
+	}
+	return &result, nil
 }

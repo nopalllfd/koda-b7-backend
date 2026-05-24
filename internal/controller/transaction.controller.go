@@ -214,3 +214,90 @@ func (tc *TransactionController) GetAllPaymentMethods(ctx *gin.Context) {
 		nil,
 	)
 }
+
+// Get All Receivers
+//
+//	@Summary		Get all receivers
+//	@Description	get all receiver users with pagination and search
+//	@Tags			transaction
+//	@Security		ApiKeyAuth
+//	@Accept			json
+//	@Produce		json
+//	@Param			page	query		int		false	"page number"		example(1)
+//	@Param			limit	query		int		false	"limit data"		example(10)
+//	@Param			search	query		string	false	"search by fullname or phone"
+//	@Success		200		{object}	dto.ReceiverSwaggerResponse
+//	@Failure		400		{object}	dto.ErrorSwaggerResponse
+//	@Failure		404		{object}	dto.ErrorSwaggerResponse
+//	@Failure		500		{object}	dto.ErrorSwaggerResponse
+//	@Router			/transactions/transfer/receivers [get]
+func (tc *TransactionController) GetAllReceiverWithPagination(ctx *gin.Context) {
+	token, _ := ctx.Get("claims")
+	claims := token.(pkg.Claims)
+
+	var query dto.TransactionQuery
+
+	if err := ctx.ShouldBindQuery(&query); err != nil {
+		utils.SendResponse(
+			ctx,
+			http.StatusBadRequest,
+			false,
+			"invalid query params",
+			nil,
+			err.Error(),
+		)
+		return
+	}
+
+	res, err := tc.transactionService.GetAllReceivers(
+		ctx.Request.Context(),
+		query,
+		claims.Id,
+	)
+
+	if err != nil {
+
+		if errors.Is(err, errs.ErrNoReceiverFound) {
+			utils.SendResponse(
+				ctx,
+				http.StatusNotFound,
+				false,
+				err.Error(),
+				nil,
+				nil,
+			)
+			return
+		}
+
+		if errors.Is(err, errs.ErrInternalServer) {
+			utils.SendResponse(
+				ctx,
+				http.StatusInternalServerError,
+				false,
+				err.Error(),
+				nil,
+				nil,
+			)
+			return
+		}
+
+		utils.SendResponse(
+			ctx,
+			http.StatusBadRequest,
+			false,
+			err.Error(),
+			nil,
+			nil,
+		)
+		return
+	}
+
+	utils.SendResponse(
+		ctx,
+		http.StatusOK,
+		true,
+		"success to get all transactions",
+		res,
+		nil,
+	)
+}

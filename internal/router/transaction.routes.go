@@ -21,5 +21,6 @@ func SetupTransactionRoute(app *gin.Engine, db *pgxpool.Pool) {
 		trx.POST("/transfer", middleware.VerifyMiddleware, TransactionController.Transfer)
 		trx.GET("", middleware.VerifyMiddleware, TransactionController.GetAllUserTransaction)
 		trx.GET("/payments", TransactionController.GetAllPaymentMethods)
+		trx.GET("/transfer/receivers", middleware.VerifyMiddleware, TransactionController.GetAllReceiverWithPagination)
 	}
 }

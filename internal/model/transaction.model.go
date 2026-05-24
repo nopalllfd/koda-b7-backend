@@ -27,16 +27,17 @@ type Topups struct {
 	PaidAt           *time.Time `db:"paid_at"`
 }
 
-type TransactionQuery struct {
-	Page   int
-	Limit  int
-	Search string
-}
-
 type PaymentMethods struct {
 	Id        int        `db:"id"`
 	Name      string     `db:"name"`
 	Logo      string     `db:"logo"`
 	CreatedAt time.Time  `db:"created_at"`
 	UpdatedAt *time.Time `db:"updated_at"`
+}
+
+type Receivers struct {
+	Id       int    `db:"id"`
+	Photo    string `db:"photo"`
+	FullName string `db:"full_name"`
+	Phone    string `db:"phone"`
 }

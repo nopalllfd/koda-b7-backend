@@ -32,4 +32,7 @@ var (
 	ErrSameWalletTransfer  = errors.New("cannot transfer to the same wallet")
 	ErrInsufficientBalance = errors.New("insufficient balance")
 	ErrTransferFailed      = errors.New("transfer failed")
+
+	ErrReceiverNotFound = errors.New("receiver not found")
+	ErrNoReceiverFound  = errors.New("no receivers found")
 )

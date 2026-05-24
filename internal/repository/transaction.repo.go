@@ -1,6 +1,7 @@
 package repository
 
 import (
+	"backend-golang/internal/dto"
 	errs "backend-golang/internal/err"
 	"backend-golang/internal/model"
 	"context"
@@ -40,7 +41,7 @@ func (tr *TransactionRepository) GetPinByUserId(ctx context.Context, dbtx DBTX, 
 	return pin, nil
 }
 
-func (tr *TransactionRepository) GetAllByUserId(ctx context.Context, dbtx DBTX, id int, query model.TransactionQuery) ([]model.TransactionResponse, int64, error) {
+func (tr *TransactionRepository) GetAllByUserId(ctx context.Context, dbtx DBTX, id int, query dto.TransactionQuery) ([]model.TransactionResponse, int64, error) {
 
 	// default pagination
 	if query.Page <= 0 {
@@ -380,4 +381,89 @@ func (tr *TransactionRepository) GetAllPaymentMethods(ctx context.Context, dbtx 
 	}
 
 	return methods, nil
+}
+
+func (ts *TransactionRepository) GetReceiversWithPagination(ctx context.Context, dbtx DBTX, query dto.TransactionQuery, userID int) ([]model.Receivers, int64, error) {
+	// default pagination
+	if query.Page <= 0 {
+		query.Page = 1
+	}
+
+	if query.Limit <= 0 {
+		query.Limit = 10
+	}
+
+	// max limit protection
+	if query.Limit > 100 {
+		query.Limit = 100
+	}
+
+	offset := (query.Page - 1) * query.Limit
+
+	sql := `
+		SELECT u.id, p.photo, p.full_name, p.phone
+	FROM users u
+	JOIN profiles p ON p.user_id = u.id
+	WHERE p.phone IS NOT NULL
+	AND p.phone <> ''
+	AND p.photo IS NOT NULL
+	AND p.photo <> ''
+	AND (
+	p.phone ILIKE '%' || $1 || '%'
+	OR
+	p.full_name ILIKE '%' || $1 || '%'
+	)
+	AND u.id <> $4
+	ORDER BY u.id DESC
+	LIMIT $2 OFFSET $3
+	`
+
+	rows, err := dbtx.Query(ctx, sql, query.Search, query.Limit, offset, userID)
+	if err != nil {
+		return nil, 0, err
+	}
+	defer rows.Close()
+
+	var result []model.Receivers
+	for rows.Next() {
+		var item model.Receivers
+
+		if err := rows.Scan(
+			&item.Id,
+			&item.Photo,
+			&item.FullName,
+			&item.Phone,
+		); err != nil {
+			return nil, 0, err
+		}
+		if err := rows.Err(); err != nil {
+			return nil, 0, err
+		}
+		result = append(result, item)
+	}
+
+	countQuery := `
+	SELECT COUNT(*)
+FROM users u
+JOIN profiles p ON p.user_id = u.id
+WHERE p.phone IS NOT NULL
+AND p.phone <> ''
+AND p.photo IS NOT NULL
+AND p.photo <> ''
+AND (
+	p.phone ILIKE '%' || $1 || '%'
+	OR
+	p.full_name ILIKE '%' || $1 || '%'
+)
+		AND u.id <> $2
+`
+
+	var total int64
+
+	if err := dbtx.QueryRow(ctx, countQuery, query.Search, userID).Scan(&total); err != nil {
+		return nil, 0, err
+	}
+
+	return result, total, nil
+
 }
