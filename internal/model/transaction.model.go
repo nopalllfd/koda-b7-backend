@@ -32,3 +32,11 @@ type TransactionQuery struct {
 	Limit  int
 	Search string
 }
+
+type PaymentMethods struct {
+	Id        int        `db:"id"`
+	Name      string     `db:"name"`
+	Logo      string     `db:"logo"`
+	CreatedAt time.Time  `db:"created_at"`
+	UpdatedAt *time.Time `db:"updated_at"`
+}

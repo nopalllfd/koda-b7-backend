@@ -21,7 +21,6 @@ type TransactionPaginationResponse struct {
 }
 
 type TopupRequest struct {
-	WalletID int `json:"wallet_id"`
 	MethodID int `json:"method_id"`
 	Amount   int `json:"amount"`
 }
@@ -39,7 +38,6 @@ type TopupResponse struct {
 }
 
 type TransferRequest struct {
-	SenderWalletID   int     `json:"sender_wallet_id"`
 	ReceiverWalletID int     `json:"receiver_wallet_id"`
 	Amount           float64 `json:"amount"`
 	Description      string  `json:"description"`
@@ -57,9 +55,9 @@ type TransferResponse struct {
 }
 
 type TransactionQuery struct {
-	Page   int
-	Limit  int
-	Search string
+	Page   int    `json:"page"`
+	Limit  int    `json:"limit"`
+	Search string `json:"search"`
 }
 
 type PaginationMeta struct {
@@ -67,4 +65,10 @@ type PaginationMeta struct {
 	Limit      int   `json:"limit"`
 	Total      int64 `json:"total"`
 	TotalPages int   `json:"total_pages"`
+}
+
+type PaymentMethods struct {
+	Id   int    `json:"id"`
+	Name string `json:"name"`
+	Logo string `json:"logo"`
 }

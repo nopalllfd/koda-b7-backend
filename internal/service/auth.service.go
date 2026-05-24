@@ -54,8 +54,13 @@ func (as *AuthService) Login(ctx context.Context, req dto.LoginRequest) (*dto.Lo
 
 	IsPinExists := len(existingUser.Pin) > 0
 
+	displayName := existingUser.FullName
+	if displayName == "" {
+		displayName = existingUser.Email
+	}
 	result := &dto.LoginResponse{
-		DisplayName: existingUser.Email,
+		DisplayName: displayName,
+		Photo:       existingUser.Photo,
 		IsPinExists: IsPinExists,
 		Token:       token,
 	}

@@ -103,7 +103,7 @@ func (ts *TransactionService) GetAllUserTransaction(ctx context.Context, userID 
 	return result, nil
 }
 
-func (ts *TransactionService) CreateTopup(ctx context.Context, input dto.TopupRequest) (dto.TopupResponse, error) {
+func (ts *TransactionService) CreateTopup(ctx context.Context, userID int, input dto.TopupRequest) (dto.TopupResponse, error) {
 
 	tx, err := ts.db.Begin(ctx)
 	if err != nil {
@@ -111,31 +111,36 @@ func (ts *TransactionService) CreateTopup(ctx context.Context, input dto.TopupRe
 	}
 	defer tx.Rollback(ctx)
 
+	walletID, err := ts.transactionRepo.GetWalletIdByUserID(ctx, tx, userID)
+	if err != nil {
+		return dto.TopupResponse{}, err
+	}
+
 	adminFee := 2500.00
 	taxAmount := adminFee * 0.12
 	totalAmount := float64(input.Amount) + taxAmount + adminFee
 
 	timestamp := time.Now().Format("20060102150405")
-	refCode := fmt.Sprintf("TOP-%s-%d", timestamp, input.WalletID)
+	refCode := fmt.Sprintf("TOP-%s-%d", timestamp, walletID)
 	status := "success"
-	paymentRef := fmt.Sprintf("80777%s%d", time.Now().Format("150405"), input.WalletID)
+	paymentRef := fmt.Sprintf("80777%s%d", time.Now().Format("150405"), walletID)
 
 	transactionID, err := ts.transactionRepo.CreateTransaction(ctx, tx, "topup", refCode, status)
 	if err != nil {
-		return dto.TopupResponse{}, errs.ErrTransactionFailed
+		return dto.TopupResponse{}, err
 	}
 
-	if err := ts.transactionRepo.CreateTopup(ctx, tx, transactionID, input.WalletID, input.MethodID, float64(input.Amount), adminFee, taxAmount, totalAmount, paymentRef); err != nil {
-		return dto.TopupResponse{}, errs.ErrTopupFailed
+	if err := ts.transactionRepo.CreateTopup(ctx, tx, transactionID, walletID, input.MethodID, float64(input.Amount), adminFee, totalAmount, paymentRef); err != nil {
+		return dto.TopupResponse{}, err
 	}
 
-	currentBalance, err := ts.transactionRepo.GetWalletBalance(ctx, tx, input.WalletID)
+	currentBalance, err := ts.transactionRepo.GetWalletBalance(ctx, tx, walletID)
 	if err != nil {
 		return dto.TopupResponse{}, errs.ErrWalletNotFound
 	}
 
 	newBalance := currentBalance + float64(input.Amount)
-	if err := ts.transactionRepo.UpdateWalletBalance(ctx, tx, input.WalletID, newBalance); err != nil {
+	if err := ts.transactionRepo.UpdateWalletBalance(ctx, tx, walletID, newBalance); err != nil {
 		return dto.TopupResponse{}, errs.ErrUpdateBalanceFailed
 	}
 
@@ -149,24 +154,28 @@ func (ts *TransactionService) CreateTopup(ctx context.Context, input dto.TopupRe
 		PaymentReference: paymentRef,
 		Amount:           float64(input.Amount),
 		AdminFee:         adminFee,
-		TaxAmount:        taxAmount,
 		Total:            totalAmount,
 		Status:           status,
 		CreatedAt:        time.Now(),
 	}, nil
 }
-func (ts *TransactionService) CreateTransfer(ctx context.Context, input dto.TransferRequest) (dto.TransferResponse, error) {
-	if input.SenderWalletID == input.ReceiverWalletID {
-		return dto.TransferResponse{}, errs.ErrSameWalletTransfer
-	}
-
+func (ts *TransactionService) CreateTransfer(ctx context.Context, input dto.TransferRequest, userID int) (dto.TransferResponse, error) {
 	tx, err := ts.db.Begin(ctx)
 	if err != nil {
 		return dto.TransferResponse{}, errs.ErrTransactionFailed
 	}
 	defer tx.Rollback(ctx)
 
-	senderBalance, err := ts.transactionRepo.GetWalletBalance(ctx, tx, input.SenderWalletID)
+	SenderWalletID, err := ts.transactionRepo.GetWalletIdByUserID(ctx, tx, userID)
+	if err != nil {
+		return dto.TransferResponse{}, err
+	}
+
+	if SenderWalletID == input.ReceiverWalletID {
+		return dto.TransferResponse{}, errs.ErrSameWalletTransfer
+	}
+
+	senderBalance, err := ts.transactionRepo.GetWalletBalance(ctx, tx, SenderWalletID)
 	if err != nil {
 		return dto.TransferResponse{}, errs.ErrWalletNotFound
 	}
@@ -181,7 +190,7 @@ func (ts *TransactionService) CreateTransfer(ctx context.Context, input dto.Tran
 	}
 
 	timestamp := time.Now().Format("20060102150405")
-	refCode := fmt.Sprintf("TRF-%s-%d", timestamp, input.SenderWalletID)
+	refCode := fmt.Sprintf("TRF-%s-%d", timestamp, SenderWalletID)
 	status := "success"
 
 	transactionID, err := ts.transactionRepo.CreateTransaction(ctx, tx, "transfer", refCode, status)
@@ -189,12 +198,12 @@ func (ts *TransactionService) CreateTransfer(ctx context.Context, input dto.Tran
 		return dto.TransferResponse{}, errs.ErrTransactionFailed
 	}
 
-	if err := ts.transactionRepo.CreateTransfer(ctx, tx, transactionID, input.SenderWalletID, input.ReceiverWalletID, float64(input.Amount), input.Description); err != nil {
+	if err := ts.transactionRepo.CreateTransfer(ctx, tx, transactionID, SenderWalletID, input.ReceiverWalletID, float64(input.Amount), input.Description); err != nil {
 		return dto.TransferResponse{}, errs.ErrTransferFailed
 	}
 
 	newSenderBalance := senderBalance - float64(input.Amount)
-	if err := ts.transactionRepo.UpdateWalletBalance(ctx, tx, input.SenderWalletID, newSenderBalance); err != nil {
+	if err := ts.transactionRepo.UpdateWalletBalance(ctx, tx, SenderWalletID, newSenderBalance); err != nil {
 		return dto.TransferResponse{}, errs.ErrUpdateBalanceFailed
 	}
 
@@ -210,11 +219,30 @@ func (ts *TransactionService) CreateTransfer(ctx context.Context, input dto.Tran
 	return dto.TransferResponse{
 		TransactionID:    transactionID,
 		ReferenceCode:    refCode,
-		SenderWalletID:   input.SenderWalletID,
+		SenderWalletID:   SenderWalletID,
 		ReceiverWalletID: input.ReceiverWalletID,
 		Amount:           float64(input.Amount),
 		Description:      input.Description,
 		Status:           status,
 		CreatedAt:        time.Now(),
 	}, nil
+}
+
+func (ts *TransactionService) GetPaymentMethods(ctx context.Context) ([]dto.PaymentMethods, error) {
+	methods, err := ts.transactionRepo.GetAllPaymentMethods(ctx, ts.db)
+	if err != nil {
+		return nil, err
+	}
+
+	var response []dto.PaymentMethods
+
+	for _, item := range methods {
+		method := dto.PaymentMethods{
+			Id:   item.Id,
+			Name: item.Name,
+			Logo: item.Logo,
+		}
+		response = append(response, method)
+	}
+	return response, nil
 }

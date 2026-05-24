@@ -1,15 +1,5 @@
 basePath: /
 definitions:
-  dto.AddPinRequest:
-    properties:
-      pin:
-        minLength: 6
-        type: string
-      user_id:
-        type: integer
-    required:
-    - pin
-    type: object
   dto.ChangePasswordRequest:
     properties:
       id:
@@ -67,6 +57,61 @@ definitions:
       success:
         type: boolean
     type: object
+  dto.PaginationMeta:
+    properties:
+      limit:
+        type: integer
+      page:
+        type: integer
+      total:
+        type: integer
+      total_pages:
+        type: integer
+    type: object
+  dto.PaymentMethods:
+    properties:
+      id:
+        type: integer
+      logo:
+        type: string
+      name:
+        type: string
+    type: object
+  dto.ProfileSwaggerResponse:
+    properties:
+      data:
+        $ref: '#/definitions/dto.Profiles'
+      message:
+        example: ok
+        type: string
+      success:
+        example: true
+        type: boolean
+    type: object
+  dto.ProfileUpdateRequest:
+    properties:
+      fullname:
+        type: string
+      phone:
+        type: string
+      photo:
+        type: string
+    type: object
+  dto.Profiles:
+    properties:
+      created_at:
+        type: string
+      fullname:
+        type: string
+      phone:
+        type: string
+      photo:
+        type: string
+      updated_at:
+        type: string
+      user_id:
+        type: integer
+    type: object
   dto.RegisterRequest:
     properties:
       email:
@@ -85,6 +130,104 @@ definitions:
         type: string
       success:
         type: boolean
+    type: object
+  dto.TopupRequest:
+    properties:
+      amount:
+        type: integer
+      method_id:
+        type: integer
+    type: object
+  dto.TopupResponse:
+    properties:
+      admin_fee:
+        type: number
+      amount:
+        type: number
+      created_at:
+        type: string
+      payment_reference:
+        type: string
+      reference_code:
+        type: string
+      status:
+        type: string
+      tax_amount:
+        type: number
+      total:
+        type: number
+      transaction_id:
+        type: integer
+    type: object
+  dto.TransactionPaginationResponse:
+    properties:
+      data:
+        items:
+          $ref: '#/definitions/dto.TransactionResponse'
+        type: array
+      meta:
+        $ref: '#/definitions/dto.PaginationMeta'
+    type: object
+  dto.TransactionResponse:
+    properties:
+      amount:
+        type: number
+      counterparty_name:
+        description: Nama lawan / nama payment method
+        type: string
+      counterparty_phone:
+        description: Pakai pointer agar aman dari NULL
+        type: string
+      created_at:
+        type: string
+      flow_type:
+        description: '"in" atau "out"'
+        type: string
+      reference_code:
+        type: string
+      status:
+        type: string
+      transaction_id:
+        type: integer
+      transaction_label:
+        description: '"Top Up", "Transfer Masuk"'
+        type: string
+      transaction_type:
+        description: '"topup" atau "transfer"'
+        type: string
+    type: object
+  dto.TransferRequest:
+    properties:
+      amount:
+        type: number
+      description:
+        type: string
+      receiver_wallet_id:
+        type: integer
+    type: object
+  dto.TransferResponse:
+    properties:
+      amount:
+        type: number
+      created_at:
+        type: string
+      description:
+        type: string
+      receiver_wallet_id:
+        type: integer
+      reference_code:
+        type: string
+      sender_wallet_id:
+        type: integer
+      status:
+        type: string
+      transaction_id:
+        type: integer
+    type: object
+  dto.UserPIN:
+    properties:
+      pin:
+        type: string
     type: object
 host: localhost:5000
 info:
@@ -157,7 +300,7 @@ paths:
           schema:
             $ref: '#/definitions/dto.ErrorSwaggerResponse'
       security:
-      - BearerAuth: []
+      - ApiKeyAuth: []
       summary: Update user password
       tags:
       - auth
@@ -172,7 +315,7 @@ paths:
         name: body
         required: true
         schema:
-          $ref: '#/definitions/dto.AddPinRequest'
+          $ref: '#/definitions/dto.UserPIN'
       produces:
       - application/json
       responses:
@@ -193,7 +336,7 @@ paths:
           schema:
             $ref: '#/definitions/dto.ErrorSwaggerResponse'
       security:
-      - BearerAuth: []
+      - ApiKeyAuth: []
       summary: Update user PIN
       tags:
       - auth
@@ -207,7 +350,7 @@ paths:
         name: body
         required: true
         schema:
-          $ref: '#/definitions/dto.AddPinRequest'
+          $ref: '#/definitions/dto.UserPIN'
       produces:
       - application/json
       responses:
@@ -223,6 +366,8 @@ paths:
           description: Internal Server Error
           schema:
             $ref: '#/definitions/dto.ErrorSwaggerResponse'
+      security:
+      - ApiKeyAuth: []
       summary: Set user PIN
       tags:
       - auth
@@ -260,6 +405,239 @@ paths:
       summary: Register user
       tags:
       - auth
+  /transactions:
+    get:
+      consumes:
+      - application/json
+      description: get paginated transaction history for logged-in user
+      parameters:
+      - description: page number
+        in: query
+        name: page
+        type: integer
+      - description: limit per page
+        in: query
+        name: limit
+        type: integer
+      - description: search keyword
+        in: query
+        name: search
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/dto.TransactionPaginationResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/dto.ErrorSwaggerResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/dto.ErrorSwaggerResponse'
+      security:
+      - ApiKeyAuth: []
+      summary: Get all user transactions
+      tags:
+      - transaction
+  /transactions/payments:
+    get:
+      description: get all payment methods
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/dto.PaymentMethods'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/dto.ErrorSwaggerResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/dto.ErrorSwaggerResponse'
+      summary: get all methods for top up flow
+      tags:
+      - transaction
+  /transactions/pin:
+    post:
+      consumes:
+      - application/json
+      description: validate user PIN before transaction
+      parameters:
+      - description: pin payload
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/dto.UserPIN'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/dto.RegisterSwaggerResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/dto.ErrorSwaggerResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/dto.ErrorSwaggerResponse'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/dto.ErrorSwaggerResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/dto.ErrorSwaggerResponse'
+      security:
+      - ApiKeyAuth: []
+      summary: Check user PIN
+      tags:
+      - transaction
+  /transactions/topup:
+    post:
+      consumes:
+      - application/json
+      description: add balance to user wallet
+      parameters:
+      - description: topup payload
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/dto.TopupRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/dto.TopupResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/dto.ErrorSwaggerResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/dto.ErrorSwaggerResponse'
+      security:
+      - ApiKeyAuth: []
+      summary: Topup wallet balance
+      tags:
+      - transaction
+  /transactions/transfer:
+    post:
+      consumes:
+      - application/json
+      description: send money between wallets
+      parameters:
+      - description: transfer payload
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/dto.TransferRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/dto.TransferResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/dto.ErrorSwaggerResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/dto.ErrorSwaggerResponse'
+      security:
+      - ApiKeyAuth: []
+      summary: Transfer balance to another wallet
+      tags:
+      - transaction
+  /user/profile:
+    get:
+      description: get authenticated user profile
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/dto.ProfileSwaggerResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/dto.ErrorSwaggerResponse'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/dto.ErrorSwaggerResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/dto.ErrorSwaggerResponse'
+      security:
+      - ApiKeyAuth: []
+      summary: Get user profile
+      tags:
+      - user
+    put:
+      consumes:
+      - application/json
+      description: update authenticated user profile
+      parameters:
+      - description: profile payload
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/dto.ProfileUpdateRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/dto.ProfileSwaggerResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/dto.ErrorSwaggerResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/dto.ErrorSwaggerResponse'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/dto.ErrorSwaggerResponse'
+        "409":
+          description: Conflict
+          schema:
+            $ref: '#/definitions/dto.ErrorSwaggerResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/dto.ErrorSwaggerResponse'
+      security:
+      - ApiKeyAuth: []
+      summary: Edit user profile
+      tags:
+      - user
 securityDefinitions:
   ApiKeyAuth:
     description: Bearer token used for authorization

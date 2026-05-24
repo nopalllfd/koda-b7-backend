@@ -68,7 +68,7 @@ func (ac *AuthController) Login(ctx *gin.Context) {
 			}
 		}
 
-		utils.SendResponse(ctx, http.StatusBadRequest, false, "invalid request body", nil, err)
+		utils.SendResponse(ctx, http.StatusBadRequest, false, "invalid request body", nil, err.Error())
 		return
 	}
 
@@ -118,12 +118,12 @@ func (ac *AuthController) Register(ctx *gin.Context) {
 		if strings.Contains(err.Error(), "Email") {
 
 			if strings.Contains(err.Error(), "required") {
-				utils.SendResponse(ctx, http.StatusBadRequest, false, "email is required", nil, err)
+				utils.SendResponse(ctx, http.StatusBadRequest, false, "email is required", nil, err.Error())
 				return
 			}
 
 			if strings.Contains(err.Error(), "email") {
-				utils.SendResponse(ctx, http.StatusBadRequest, false, "invalid email format", nil, err)
+				utils.SendResponse(ctx, http.StatusBadRequest, false, "invalid email format", nil, err.Error())
 				return
 			}
 		}
@@ -131,7 +131,7 @@ func (ac *AuthController) Register(ctx *gin.Context) {
 		if strings.Contains(err.Error(), "Password") {
 
 			if strings.Contains(err.Error(), "required") {
-				utils.SendResponse(ctx, http.StatusBadRequest, false, "password is required", nil, err)
+				utils.SendResponse(ctx, http.StatusBadRequest, false, "password is required", nil, err.Error())
 				return
 			}
 
@@ -141,7 +141,7 @@ func (ac *AuthController) Register(ctx *gin.Context) {
 			}
 		}
 
-		utils.SendResponse(ctx, http.StatusBadRequest, false, "invalid request body", nil, err)
+		utils.SendResponse(ctx, http.StatusBadRequest, false, "invalid request body", nil, err.Error())
 		return
 	}
 
@@ -169,31 +169,36 @@ func (ac *AuthController) Register(ctx *gin.Context) {
 //	@Summary		Set user PIN
 //	@Description	create PIN for user
 //	@Tags			auth
+//	@Security		ApiKeyAuth
 //	@Accept			json
 //	@Produce		json
-//	@Param			body	body		dto.AddPinRequest	true	"pin payload"
+//	@Param			body	body		dto.UserPIN	true	"pin payload"
 //	@Success		201		{object}	dto.RegisterSwaggerResponse
 //	@Failure		400		{object}	dto.ErrorSwaggerResponse
 //	@Failure		500		{object}	dto.ErrorSwaggerResponse
 //	@Router			/auth/pin [post]
 func (ac *AuthController) SetUserPin(ctx *gin.Context) {
+	token, _ := ctx.Get("claims")
+	claims := token.(pkg.Claims)
+
 	var user dto.AddPinRequest
 
 	if err := ctx.ShouldBindBodyWith(&user, binding.JSON); err != nil {
 
 		if strings.Contains(err.Error(), "required") {
-			utils.SendResponse(ctx, http.StatusBadRequest, false, "pin is required", nil, err)
+			utils.SendResponse(ctx, http.StatusBadRequest, false, "pin is required", nil, nil)
 			return
 		}
 
 		if strings.Contains(err.Error(), "min") {
-			utils.SendResponse(ctx, http.StatusBadRequest, false, "pin must be at least 6 characters", nil, err)
+			utils.SendResponse(ctx, http.StatusBadRequest, false, "pin must be at least 6 characters", nil, nil)
 			return
 		}
 
-		utils.SendResponse(ctx, http.StatusBadRequest, false, "invalid request body", nil, err)
+		utils.SendResponse(ctx, http.StatusBadRequest, false, "invalid request body", nil, err.Error())
 		return
 	}
+	user.UserID = claims.Id
 
 	if err := ac.authService.SetPin(ctx.Request.Context(), user); err != nil {
 		utils.SendResponse(ctx, http.StatusInternalServerError, false, "set pin failed", nil, err.Error())
@@ -208,10 +213,10 @@ func (ac *AuthController) SetUserPin(ctx *gin.Context) {
 //	@Summary		Update user PIN
 //	@Description	update existing user PIN
 //	@Tags			auth
-//	@Security		BearerAuth
+//	@Security		ApiKeyAuth
 //	@Accept			json
 //	@Produce		json
-//	@Param			body	body		dto.AddPinRequest	true	"pin payload"
+//	@Param			body	body		dto.UserPIN	true	"pin payload"
 //	@Success		200		{object}	dto.RegisterSwaggerResponse
 //	@Failure		400		{object}	dto.ErrorSwaggerResponse
 //	@Failure		401		{object}	dto.ErrorSwaggerResponse
@@ -226,12 +231,12 @@ func (ac *AuthController) UpdateUserPin(ctx *gin.Context) {
 	if err := ctx.ShouldBindBodyWith(&user, binding.JSON); err != nil {
 
 		if strings.Contains(err.Error(), "required") {
-			utils.SendResponse(ctx, http.StatusBadRequest, false, "pin is required", nil, err)
+			utils.SendResponse(ctx, http.StatusBadRequest, false, "pin is required", nil, err.Error())
 			return
 		}
 
 		if strings.Contains(err.Error(), "min") {
-			utils.SendResponse(ctx, http.StatusBadRequest, false, "pin must be at least 6 characters", nil, err)
+			utils.SendResponse(ctx, http.StatusBadRequest, false, "pin must be at least 6 characters", nil, err.Error())
 			return
 		}
 
@@ -254,7 +259,7 @@ func (ac *AuthController) UpdateUserPin(ctx *gin.Context) {
 //	@Summary		Update user password
 //	@Description	change current user password
 //	@Tags			auth
-//	@Security		BearerAuth
+//	@Security		ApiKeyAuth
 //	@Accept			json
 //	@Produce		json
 //	@Param			body	body		dto.ChangePasswordRequest	true	"change password payload"

@@ -7,6 +7,8 @@ type User struct {
 	Email      string    `db:"email"`
 	Password   string    `db:"password"`
 	Pin        string    `db:"pin"`
+	FullName   string    `db:"full_name"`
+	Photo      string    `db:"photo"`
 	Created_at time.Time `db:"created_at"`
 	Updated_at time.Time `db:"updated_at_at"`
 }

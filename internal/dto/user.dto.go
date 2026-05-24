@@ -16,3 +16,9 @@ type ProfileUpdateRequest struct {
 	Photo    string `json:"photo"`
 	Phone    string `json:"phone"`
 }
+
+type ProfileSwaggerResponse struct {
+	Success bool     `json:"success" example:"true"`
+	Message string   `json:"message" example:"ok"`
+	Data    Profiles `json:"data"`
+}

@@ -24,6 +24,18 @@ func NewUserController(userService *service.UserService) *UserController {
 	}
 }
 
+// Get User Profile
+//
+//	@Summary		Get user profile
+//	@Description	get authenticated user profile
+//	@Tags			user
+//	@Security		ApiKeyAuth
+//	@Produce		json
+//	@Success		200	{object}	dto.ProfileSwaggerResponse
+//	@Failure		401	{object}	dto.ErrorSwaggerResponse
+//	@Failure		404	{object}	dto.ErrorSwaggerResponse
+//	@Failure		500	{object}	dto.ErrorSwaggerResponse
+//	@Router			/user/profile [get]
 func (uc *UserController) GetProfile(ctx *gin.Context) {
 	token, _ := ctx.Get("claims")
 	claims := token.(pkg.Claims)
@@ -31,40 +43,66 @@ func (uc *UserController) GetProfile(ctx *gin.Context) {
 	user, err := uc.userService.GetUserProfile(ctx.Request.Context(), claims.Id)
 	if err != nil {
 		log.Println(err.Error())
+
 		if errors.Is(err, errs.ErrProfileNotFound) {
 			utils.SendResponse(ctx, http.StatusNotFound, false, "get profile failed", nil, err.Error())
 			return
 		}
+
 		utils.SendResponse(ctx, http.StatusInternalServerError, false, "get profile failed", nil, err.Error())
 		return
 	}
+
 	utils.SendResponse(ctx, http.StatusOK, true, "ok", user, nil)
 }
 
+// Edit User Profile
+//
+//	@Summary		Edit user profile
+//	@Description	update authenticated user profile
+//	@Tags			user
+//	@Security		ApiKeyAuth
+//	@Accept			json
+//	@Produce		json
+//	@Param			body	body		dto.ProfileUpdateRequest	true	"profile payload"
+//	@Success		200		{object}	dto.ProfileSwaggerResponse
+//	@Failure		400		{object}	dto.ErrorSwaggerResponse
+//	@Failure		401		{object}	dto.ErrorSwaggerResponse
+//	@Failure		404		{object}	dto.ErrorSwaggerResponse
+//	@Failure		409		{object}	dto.ErrorSwaggerResponse
+//	@Failure		500		{object}	dto.ErrorSwaggerResponse
+//	@Router			/user/profile [put]
 func (uc *UserController) EditProfile(ctx *gin.Context) {
 	token, _ := ctx.Get("claims")
 	claims := token.(pkg.Claims)
+
 	var profile dto.ProfileUpdateRequest
+
 	if err := ctx.ShouldBindBodyWith(&profile, binding.JSON); err != nil {
 		utils.SendResponse(ctx, http.StatusBadRequest, false, "invalid request body", nil, err.Error())
 		return
 	}
 
 	if err := uc.userService.EditProfile(ctx.Request.Context(), claims.Id, profile); err != nil {
+
 		if errors.Is(err, errs.ErrPhoneAlreadyUsed) {
 			utils.SendResponse(ctx, http.StatusConflict, false, "edit profile failed", nil, err.Error())
 			return
 		}
+
 		if errors.Is(err, errs.ErrProfileNotFound) {
 			utils.SendResponse(ctx, http.StatusNotFound, false, "edit profile failed", nil, err.Error())
 			return
 		}
+
 		if errors.Is(err, errs.ErrInvalidInput) {
 			utils.SendResponse(ctx, http.StatusBadRequest, false, "edit profile failed", nil, err.Error())
 			return
 		}
+
 		utils.SendResponse(ctx, http.StatusInternalServerError, false, "edit profile failed", nil, err.Error())
 		return
 	}
+
 	utils.SendResponse(ctx, http.StatusOK, true, "ok", profile, nil)
 }

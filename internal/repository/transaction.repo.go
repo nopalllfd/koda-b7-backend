@@ -40,12 +40,7 @@ func (tr *TransactionRepository) GetPinByUserId(ctx context.Context, dbtx DBTX, 
 	return pin, nil
 }
 
-func (tr *TransactionRepository) GetAllByUserId(
-	ctx context.Context,
-	dbtx DBTX,
-	id int,
-	query model.TransactionQuery,
-) ([]model.TransactionResponse, int64, error) {
+func (tr *TransactionRepository) GetAllByUserId(ctx context.Context, dbtx DBTX, id int, query model.TransactionQuery) ([]model.TransactionResponse, int64, error) {
 
 	// default pagination
 	if query.Page <= 0 {
@@ -298,8 +293,8 @@ func (tr *TransactionRepository) GetAllByUserId(
 
 func (tr *TransactionRepository) CreateTransaction(ctx context.Context, dbtx DBTX, txType, refCode, status string) (int, error) {
 	sql := `
-		INSERT INTO transactions (type, reference_code, status, created_at, updated_at)
-		VALUES ($1, $2, $3, NOW(), NOW())
+		INSERT INTO transactions (type, reference_code, status, created_at)
+		VALUES ($1, $2, $3, NOW())
 		RETURNING id;
 	`
 	var trxID int
@@ -309,12 +304,21 @@ func (tr *TransactionRepository) CreateTransaction(ctx context.Context, dbtx DBT
 	return trxID, nil
 }
 
-func (tr *TransactionRepository) CreateTopup(ctx context.Context, dbtx DBTX, transactionID, walletID, methodID int, amount, adminFee, taxAmount, total float64, paymentRef string) error {
+func (tr *TransactionRepository) GetWalletIdByUserID(ctx context.Context, dbtx DBTX, userID int) (int, error) {
+	sql := `SELECT id FROM wallets WHERE user_id = $1`
+	var id int
+	if err := dbtx.QueryRow(ctx, sql, userID).Scan(&id); err != nil {
+		return 0, err
+	}
+	return id, nil
+}
+
+func (tr *TransactionRepository) CreateTopup(ctx context.Context, dbtx DBTX, transactionID, walletID, methodID int, amount, adminFee, total float64, paymentRef string) error {
 	query := `
-		INSERT INTO topups (transaction_id, wallet_id, method_id, amount, admin_fee, tax_amount, total, payment_reference)
-		VALUES ($1, $2, $3, $4, $5, $6, $7, $8);
+		INSERT INTO topups (transaction_id, wallet_id, method_id, amount, admin_fee, total, payment_reference)
+		VALUES ($1, $2, $3, $4, $5, $6, $7);
 	`
-	if _, err := dbtx.Exec(ctx, query, transactionID, walletID, methodID, amount, adminFee, taxAmount, total, paymentRef); err != nil {
+	if _, err := dbtx.Exec(ctx, query, transactionID, walletID, methodID, amount, adminFee, total, paymentRef); err != nil {
 		return err
 	}
 	return nil
@@ -346,4 +350,34 @@ func (tr *TransactionRepository) CreateTransfer(ctx context.Context, dbtx DBTX, 
 		return err
 	}
 	return nil
+}
+
+func (tr *TransactionRepository) GetAllPaymentMethods(ctx context.Context, dbtx DBTX) ([]model.PaymentMethods, error) {
+	sql := `SELECT id, name, logo, created_at, updated_at FROM payment_methods`
+	rows, err := dbtx.Query(ctx, sql)
+	if err != nil {
+		return nil, err
+	}
+
+	defer rows.Close()
+
+	var methods []model.PaymentMethods
+
+	for rows.Next() {
+		var item model.PaymentMethods
+
+		if err := rows.Scan(
+			&item.Id,
+			&item.Name,
+			&item.Logo,
+			&item.CreatedAt,
+			&item.UpdatedAt,
+		); err != nil {
+			return nil, err
+		}
+		methods = append(methods, item)
+
+	}
+
+	return methods, nil
 }
