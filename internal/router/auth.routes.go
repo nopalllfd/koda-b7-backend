@@ -26,7 +26,7 @@ func SetupAuthRoute(app *gin.Engine, db *pgxpool.Pool) {
 
 		auth.POST("/register/pin", AuthController.SetUserPin)
 
-		auth.POST("/change/pin", middleware.VerifyMiddleware, AuthController.UpdateUserPin)
-		auth.POST("/change/password", middleware.VerifyMiddleware, AuthController.UpdateUserPassword)
+		auth.PATCH("/change/pin", middleware.VerifyMiddleware, AuthController.UpdateUserPin)
+		auth.PATCH("/change/password", middleware.VerifyMiddleware, AuthController.UpdateUserPassword)
 	}
 }

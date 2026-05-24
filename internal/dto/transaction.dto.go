@@ -15,6 +15,11 @@ type TransactionResponse struct {
 	CreatedAt         time.Time `json:"created_at" db:"created_at"`
 }
 
+type TransactionPaginationResponse struct {
+	Data []TransactionResponse `json:"data"`
+	Meta PaginationMeta        `json:"meta"`
+}
+
 type TopupRequest struct {
 	WalletID int `json:"wallet_id"`
 	MethodID int `json:"method_id"`
@@ -49,4 +54,17 @@ type TransferResponse struct {
 	Description      string    `json:"description"`
 	Status           string    `json:"status"`
 	CreatedAt        time.Time `json:"created_at"`
+}
+
+type TransactionQuery struct {
+	Page   int
+	Limit  int
+	Search string
+}
+
+type PaginationMeta struct {
+	Page       int   `json:"page"`
+	Limit      int   `json:"limit"`
+	Total      int64 `json:"total"`
+	TotalPages int   `json:"total_pages"`
 }

@@ -3,12 +3,14 @@ package service
 import (
 	"backend-golang/internal/dto"
 	errs "backend-golang/internal/err"
+	"backend-golang/internal/model"
 	"backend-golang/internal/repository"
 	"backend-golang/pkg"
 	"context"
 	"errors"
 	"fmt"
 	"log"
+	"math"
 	"time"
 
 	"github.com/jackc/pgx/v5/pgxpool"
@@ -44,8 +46,18 @@ func (ts *TransactionService) CheckPin(ctx context.Context, userID int, pin stri
 	return nil
 }
 
-func (ts *TransactionService) GetAllUserTransaction(ctx context.Context, userID int) ([]dto.TransactionResponse, error) {
-	transactions, err := ts.transactionRepo.GetAllByUserId(ctx, ts.db, userID)
+func (ts *TransactionService) GetAllUserTransaction(ctx context.Context, userID int, query dto.TransactionQuery) (*dto.TransactionPaginationResponse, error) {
+	transactions, total, err := ts.transactionRepo.GetAllByUserId(
+		ctx,
+		ts.db,
+		userID,
+		model.TransactionQuery{
+			Page:   query.Page,
+			Limit:  query.Limit,
+			Search: query.Search,
+		},
+	)
+
 	if err != nil {
 		return nil, err
 	}
@@ -53,7 +65,8 @@ func (ts *TransactionService) GetAllUserTransaction(ctx context.Context, userID 
 	var response []dto.TransactionResponse
 
 	for _, trx := range transactions {
-		items := dto.TransactionResponse{
+
+		item := dto.TransactionResponse{
 			TransactionID:     trx.TransactionID,
 			ReferenceCode:     trx.ReferenceCode,
 			TransactionType:   trx.TransactionType,
@@ -65,9 +78,29 @@ func (ts *TransactionService) GetAllUserTransaction(ctx context.Context, userID 
 			Status:            trx.Status,
 			CreatedAt:         trx.CreatedAt,
 		}
-		response = append(response, items)
+
+		response = append(response, item)
 	}
-	return response, nil
+
+	// default limit protection
+	limit := query.Limit
+	if limit <= 0 {
+		limit = 10
+	}
+
+	totalPages := int(math.Ceil(float64(total) / float64(limit)))
+
+	result := &dto.TransactionPaginationResponse{
+		Data: response,
+		Meta: dto.PaginationMeta{
+			Page:       query.Page,
+			Limit:      limit,
+			Total:      total,
+			TotalPages: totalPages,
+		},
+	}
+
+	return result, nil
 }
 
 func (ts *TransactionService) CreateTopup(ctx context.Context, input dto.TopupRequest) (dto.TopupResponse, error) {
@@ -122,6 +155,66 @@ func (ts *TransactionService) CreateTopup(ctx context.Context, input dto.TopupRe
 		CreatedAt:        time.Now(),
 	}, nil
 }
-func (tx *TransactionService) CreateTransfer(ctx context.Context, input dto.TransferRequest) (dto.TransferResponse, error) {
+func (ts *TransactionService) CreateTransfer(ctx context.Context, input dto.TransferRequest) (dto.TransferResponse, error) {
+	if input.SenderWalletID == input.ReceiverWalletID {
+		return dto.TransferResponse{}, errs.ErrSameWalletTransfer
+	}
 
+	tx, err := ts.db.Begin(ctx)
+	if err != nil {
+		return dto.TransferResponse{}, errs.ErrTransactionFailed
+	}
+	defer tx.Rollback(ctx)
+
+	senderBalance, err := ts.transactionRepo.GetWalletBalance(ctx, tx, input.SenderWalletID)
+	if err != nil {
+		return dto.TransferResponse{}, errs.ErrWalletNotFound
+	}
+
+	if senderBalance < float64(input.Amount) {
+		return dto.TransferResponse{}, errs.ErrInsufficientBalance
+	}
+
+	receiverBalance, err := ts.transactionRepo.GetWalletBalance(ctx, tx, input.ReceiverWalletID)
+	if err != nil {
+		return dto.TransferResponse{}, errs.ErrWalletNotFound
+	}
+
+	timestamp := time.Now().Format("20060102150405")
+	refCode := fmt.Sprintf("TRF-%s-%d", timestamp, input.SenderWalletID)
+	status := "success"
+
+	transactionID, err := ts.transactionRepo.CreateTransaction(ctx, tx, "transfer", refCode, status)
+	if err != nil {
+		return dto.TransferResponse{}, errs.ErrTransactionFailed
+	}
+
+	if err := ts.transactionRepo.CreateTransfer(ctx, tx, transactionID, input.SenderWalletID, input.ReceiverWalletID, float64(input.Amount), input.Description); err != nil {
+		return dto.TransferResponse{}, errs.ErrTransferFailed
+	}
+
+	newSenderBalance := senderBalance - float64(input.Amount)
+	if err := ts.transactionRepo.UpdateWalletBalance(ctx, tx, input.SenderWalletID, newSenderBalance); err != nil {
+		return dto.TransferResponse{}, errs.ErrUpdateBalanceFailed
+	}
+
+	newReceiverBalance := receiverBalance + float64(input.Amount)
+	if err := ts.transactionRepo.UpdateWalletBalance(ctx, tx, input.ReceiverWalletID, newReceiverBalance); err != nil {
+		return dto.TransferResponse{}, errs.ErrUpdateBalanceFailed
+	}
+
+	if err := tx.Commit(ctx); err != nil {
+		return dto.TransferResponse{}, errs.ErrTransactionFailed
+	}
+
+	return dto.TransferResponse{
+		TransactionID:    transactionID,
+		ReferenceCode:    refCode,
+		SenderWalletID:   input.SenderWalletID,
+		ReceiverWalletID: input.ReceiverWalletID,
+		Amount:           float64(input.Amount),
+		Description:      input.Description,
+		Status:           status,
+		CreatedAt:        time.Now(),
+	}, nil
 }

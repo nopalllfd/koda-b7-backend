@@ -47,14 +47,51 @@ func (tc *TransactionController) CheckPin(ctx *gin.Context) {
 }
 
 func (tc *TransactionController) GetAllUserTransaction(ctx *gin.Context) {
+
 	token, _ := ctx.Get("claims")
 	claims := token.(pkg.Claims)
-	transactionsHistory, err := tc.transactionService.GetAllUserTransaction(ctx.Request.Context(), claims.Id)
-	if err != nil {
-		utils.SendResponse(ctx, http.StatusBadRequest, false, "failed to get all transactions", nil, err.Error())
+
+	var query dto.TransactionQuery
+
+	// bind query params
+	if err := ctx.ShouldBindQuery(&query); err != nil {
+		utils.SendResponse(
+			ctx,
+			http.StatusBadRequest,
+			false,
+			"invalid query params",
+			nil,
+			err.Error(),
+		)
+		return
 	}
 
-	utils.SendResponse(ctx, http.StatusOK, true, "success to get all transactions", transactionsHistory, nil)
+	transactionsHistory, err := tc.transactionService.GetAllUserTransaction(
+		ctx.Request.Context(),
+		claims.Id,
+		query,
+	)
+
+	if err != nil {
+		utils.SendResponse(
+			ctx,
+			http.StatusBadRequest,
+			false,
+			"failed to get all transactions",
+			nil,
+			err.Error(),
+		)
+		return
+	}
+
+	utils.SendResponse(
+		ctx,
+		http.StatusOK,
+		true,
+		"success to get all transactions",
+		transactionsHistory,
+		nil,
+	)
 }
 
 func (tc *TransactionController) Topup(ctx *gin.Context) {

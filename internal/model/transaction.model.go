@@ -26,3 +26,9 @@ type Topups struct {
 	ExpiredAt        *time.Time `db:"expired_at"`
 	PaidAt           *time.Time `db:"paid_at"`
 }
+
+type TransactionQuery struct {
+	Page   int
+	Limit  int
+	Search string
+}
