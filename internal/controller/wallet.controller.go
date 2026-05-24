@@ -20,6 +20,17 @@ func NewWalletController(walletService *service.WalletService) *WalletController
 	}
 }
 
+// Get Dashboard
+//
+//	@Summary		Get dashboard
+//	@Description	get wallet dashboard data for authenticated user
+//	@Tags			wallet
+//	@Security		ApiKeyAuth
+//	@Produce		json
+//	@Success		200	{object}	dto.DashboardSwaggerResponse
+//	@Failure		401	{object}	dto.ErrorSwaggerResponse
+//	@Failure		500	{object}	dto.ErrorSwaggerResponse
+//	@Router			/wallet/dashboard [get]
 func (wc *WalletController) GetDashboard(ctx *gin.Context) {
 	token, _ := ctx.Get("claims")
 	claims := token.(pkg.Claims)
@@ -27,8 +38,17 @@ func (wc *WalletController) GetDashboard(ctx *gin.Context) {
 	user, err := wc.walletService.GetDashboard(ctx.Request.Context(), claims.Id)
 	if err != nil {
 		log.Println(err.Error())
-		utils.SendResponse(ctx, http.StatusInternalServerError, false, "get dashboard failed", nil, err.Error())
+
+		utils.SendResponse(
+			ctx,
+			http.StatusInternalServerError,
+			false,
+			"get dashboard failed",
+			nil,
+			err.Error(),
+		)
 		return
 	}
+
 	utils.SendResponse(ctx, http.StatusOK, true, "ok", user, nil)
 }

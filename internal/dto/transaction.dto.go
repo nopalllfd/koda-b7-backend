@@ -41,6 +41,7 @@ type TransferRequest struct {
 	ReceiverWalletID int     `json:"receiver_wallet_id"`
 	Amount           float64 `json:"amount"`
 	Description      string  `json:"description"`
+	Pin              string  `json:"pin"`
 }
 
 type TransferResponse struct {

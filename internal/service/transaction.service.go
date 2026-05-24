@@ -159,7 +159,25 @@ func (ts *TransactionService) CreateTopup(ctx context.Context, userID int, input
 		CreatedAt:        time.Now(),
 	}, nil
 }
+
 func (ts *TransactionService) CreateTransfer(ctx context.Context, input dto.TransferRequest, userID int) (dto.TransferResponse, error) {
+
+	var hc pkg.HashConfig
+	hc.OwaspRecomendedHashConfig()
+
+	existingPin, err := ts.transactionRepo.GetPinByUserId(ctx, ts.db, userID)
+	if err != nil {
+		if errors.Is(err, errs.ErrUserNotFound) || errors.Is(err, errs.ErrPINNotSet) {
+			return dto.TransferResponse{}, err
+		}
+		return dto.TransferResponse{}, errs.ErrInternalServer
+	}
+
+	log.Println("ini pin awal", input.Pin)
+	if err := hc.Compare(input.Pin, existingPin); err != nil {
+		return dto.TransferResponse{}, errs.ErrInvalidPin
+	}
+
 	tx, err := ts.db.Begin(ctx)
 	if err != nil {
 		return dto.TransferResponse{}, errs.ErrTransactionFailed

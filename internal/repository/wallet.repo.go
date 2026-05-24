@@ -36,15 +36,23 @@ func (wr *WalletRepository) GetDashboard(ctx context.Context, userID int) (model
         FROM transfers t
         JOIN wallets w ON w.id = t.receiver_wallet_id
         JOIN transactions trx ON trx.id = t.transaction_id
-        WHERE w.user_id = $1 AND trx.status = 'success'
-    ) 
+        WHERE w.user_id = $1 
+        AND trx.status = 'success'
+    ) AS income,
 
-	(SELECT COALESCE(SUM(t.amount), 0)
+    (
+        SELECT COALESCE(SUM(t.amount), 0)
         FROM transfers t
         JOIN wallets w ON w.id = t.sender_wallet_id
         JOIN transactions trx ON trx.id = t.transaction_id
-        WHERE w.user_id = $1 AND trx.status = 'success') AS grand_total_expense, wallets.balance FROM wallets WHERE wallets.user_id = $1
-	`
+        WHERE w.user_id = $1 
+        AND trx.status = 'success'
+    ) AS grand_total_expense,
+
+    wallets.balance
+
+FROM wallets
+WHERE wallets.user_id = $1;`
 	var userDashboard model.WalletSummary
 	if err := wr.db.QueryRow(ctx, sql, userID).Scan(&userDashboard.Income, &userDashboard.Expense, &userDashboard.Balance); err != nil {
 		return model.WalletSummary{}, err
