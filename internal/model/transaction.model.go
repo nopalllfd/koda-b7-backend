@@ -41,3 +41,9 @@ type Receivers struct {
 	FullName string `db:"full_name"`
 	Phone    string `db:"phone"`
 }
+
+type IncomeExpenseChart struct {
+	Date   time.Time
+	Amount float64
+	Type   string
+}

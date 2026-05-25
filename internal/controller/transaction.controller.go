@@ -7,6 +7,7 @@ import (
 	"backend-golang/pkg"
 	"backend-golang/pkg/utils"
 	"errors"
+	"log"
 	"net/http"
 
 	"github.com/gin-gonic/gin"
@@ -104,6 +105,7 @@ func (tc *TransactionController) GetAllUserTransaction(ctx *gin.Context) {
 		utils.SendResponse(ctx, http.StatusInternalServerError, false, "failed to get all transactions", nil, err.Error())
 		return
 	}
+	log.Println(query)
 
 	utils.SendResponse(ctx, http.StatusOK, true, "success to get all transactions", result, nil)
 }
@@ -297,6 +299,66 @@ func (tc *TransactionController) GetAllReceiverWithPagination(ctx *gin.Context) 
 		http.StatusOK,
 		true,
 		"success to get all transactions",
+		res,
+		nil,
+	)
+}
+
+// Get Chart Data
+//
+//	@Summary		Get income/expense chart data
+//	@Description	get chart data for income, expense, or both with period filter (7d or 1m)
+//	@Tags			transaction
+//	@Security		ApiKeyAuth
+//	@Accept			json
+//	@Produce		json
+//	@Param			type	query		string	false	"type filter (income | expense | all)"
+//	@Param			period	query		string	false	"period filter (7d | 1m)"
+//	@Success		200		{object}	[]dto.IncomeExpenseChart
+//	@Failure		400		{object}	dto.ErrorSwaggerResponse
+//	@Failure		500		{object}	dto.ErrorSwaggerResponse
+//	@Router			/transactions/chart [get]
+func (tc *TransactionController) GetChartData(ctx *gin.Context) {
+	token, _ := ctx.Get("claims")
+	claims := token.(pkg.Claims)
+
+	var query dto.ChartQuery
+
+	if err := ctx.ShouldBindQuery(&query); err != nil {
+		utils.SendResponse(
+			ctx,
+			http.StatusBadRequest,
+			false,
+			"invalid query params",
+			nil,
+			err.Error(),
+		)
+		return
+	}
+
+	res, err := tc.transactionService.GetChartData(
+		ctx.Request.Context(),
+		claims.Id,
+		query,
+	)
+
+	if err != nil {
+		utils.SendResponse(
+			ctx,
+			http.StatusInternalServerError,
+			false,
+			"failed to get chart data",
+			nil,
+			err.Error(),
+		)
+		return
+	}
+
+	utils.SendResponse(
+		ctx,
+		http.StatusOK,
+		true,
+		"success to get chart data",
 		res,
 		nil,
 	)

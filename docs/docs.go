@@ -339,6 +339,63 @@ const docTemplate = `{
                 }
             }
         },
+        "/transactions/chart": {
+            "get": {
+                "security": [
+                    {
+                        "ApiKeyAuth": []
+                    }
+                ],
+                "description": "get chart data for income, expense, or both with period filter (7d or 1m)",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "transaction"
+                ],
+                "summary": "Get income/expense chart data",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "type filter (income | expense | all)",
+                        "name": "type",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "description": "period filter (7d | 1m)",
+                        "name": "period",
+                        "in": "query"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "type": "array",
+                            "items": {
+                                "$ref": "#/definitions/dto.IncomeExpenseChart"
+                            }
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/dto.ErrorSwaggerResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/dto.ErrorSwaggerResponse"
+                        }
+                    }
+                }
+            }
+        },
         "/transactions/payments": {
             "get": {
                 "description": "get all payment methods",
@@ -824,6 +881,21 @@ const docTemplate = `{
                 "success": {
                     "type": "boolean",
                     "example": false
+                }
+            }
+        },
+        "dto.IncomeExpenseChart": {
+            "type": "object",
+            "properties": {
+                "amount": {
+                    "type": "number"
+                },
+                "date": {
+                    "type": "string"
+                },
+                "type": {
+                    "description": "income / expense",
+                    "type": "string"
                 }
             }
         },

@@ -82,9 +82,13 @@ func (ts *TransactionService) GetAllUserTransaction(ctx context.Context, userID 
 	}
 
 	// default limit protection
+	log.Println(query)
 	limit := query.Limit
 	if limit <= 0 {
 		limit = 10
+	}
+	if query.Page <= 0 {
+		query.Page = 1
 	}
 
 	totalPages := int(math.Ceil(float64(total) / float64(limit)))
@@ -318,4 +322,62 @@ func (ts *TransactionService) GetAllReceivers(
 	}
 
 	return &result, nil
+}
+
+func (ts *TransactionService) GetChartData(
+	ctx context.Context,
+	userID int,
+	query dto.ChartQuery,
+) ([]dto.IncomeExpenseChart, error) {
+
+	var interval string
+
+	if query.Period != "7d" && query.Period != "1m" {
+		return nil, errors.New("invalid date range")
+	}
+	if query.Period == "1m" {
+		interval = "30 days"
+	} else {
+		interval = "7 days"
+	}
+
+	txType := query.Type
+	if txType == "" {
+		txType = "all"
+	}
+
+	if txType == "income" {
+		txType = "in"
+	} else if txType == "expense" {
+		txType = "out"
+	}
+
+	if txType != "all" && txType != "in" && txType != "out" {
+		return nil, errors.New("invalid flow type")
+	}
+
+	data, err := ts.transactionRepo.GetChartData(
+		ctx,
+		ts.db,
+		userID,
+		interval,
+		txType,
+	)
+
+	if err != nil {
+		return nil, err
+	}
+
+	var response []dto.IncomeExpenseChart
+
+	for _, item := range data {
+
+		response = append(response, dto.IncomeExpenseChart{
+			Date:   item.Date,
+			Amount: item.Amount,
+			Type:   item.Type,
+		})
+	}
+
+	return response, nil
 }

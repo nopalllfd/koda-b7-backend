@@ -61,9 +61,9 @@ type TransferResponse struct {
 }
 
 type TransactionQuery struct {
-	Page   int    `json:"page"`
-	Limit  int    `json:"limit"`
-	Search string `json:"search"`
+	Page   int    `form:"page"`
+	Limit  int    `form:"limit"`
+	Search string `form:"search"`
 }
 
 type PaginationMeta struct {
@@ -90,4 +90,15 @@ type ReceiverSwaggerResponse struct {
 	Success bool                         `json:"success" example:"true"`
 	Message string                       `json:"message" example:"success to get all transactions"`
 	Data    []ReceiverPaginationResponse `json:"data"`
+}
+
+type ChartQuery struct {
+	Type   string `form:"type"`   // income | expense | all
+	Period string `form:"period"` // 7d | 1m
+}
+
+type IncomeExpenseChart struct {
+	Date   time.Time `json:"date"`
+	Amount float64   `json:"amount"`
+	Type   string    `json:"type"`
 }

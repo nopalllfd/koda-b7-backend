@@ -467,3 +467,70 @@ AND (
 	return result, total, nil
 
 }
+
+func (tr *TransactionRepository) GetChartData(
+	ctx context.Context,
+	dbtx DBTX,
+	userID int,
+	interval string,
+	txType string,
+) ([]model.IncomeExpenseChart, error) {
+
+	sql := `
+WITH MyWallet AS (
+	SELECT id
+	FROM wallets
+	WHERE user_id = $1
+	LIMIT 1
+),
+
+MyTransfers AS (
+	SELECT 
+		tf.transaction_id,
+		tf.amount,
+		CASE 
+			WHEN tf.receiver_wallet_id = (SELECT id FROM MyWallet) THEN 'in'
+			ELSE 'out'
+		END AS flow,
+		trx.created_at::date AS trx_date
+	FROM transfers tf
+	JOIN transactions trx ON trx.id = tf.transaction_id
+	WHERE tf.sender_wallet_id = (SELECT id FROM MyWallet)
+	   OR tf.receiver_wallet_id = (SELECT id FROM MyWallet)
+),
+
+AllTx AS (
+	SELECT * FROM MyTransfers
+)
+
+SELECT 
+	trx_date,
+	SUM(amount) AS amount,
+	flow
+FROM AllTx
+WHERE trx_date >= (CURRENT_DATE - $2::interval)
+  AND ($3 = 'all' OR flow = $3)
+GROUP BY trx_date, flow
+ORDER BY trx_date ASC;
+`
+
+	rows, err := dbtx.Query(ctx, sql, userID, interval, txType)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	var result []model.IncomeExpenseChart
+
+	for rows.Next() {
+		var item model.IncomeExpenseChart
+
+		if err := rows.Scan(&item.Date, &item.Amount, &item.Type); err != nil {
+			return nil, err
+		}
+
+		result = append(result, item)
+	}
+
+	return result, nil
+}
