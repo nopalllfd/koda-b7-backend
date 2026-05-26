@@ -64,6 +64,52 @@ const docTemplate = `{
                 }
             }
         },
+        "/auth/logout": {
+            "delete": {
+                "security": [
+                    {
+                        "ApiKeyAuth": []
+                    }
+                ],
+                "description": "for logout",
+                "tags": [
+                    "auth"
+                ],
+                "summary": "Delete user token",
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/dto.LogoutSwaggerResponse"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/dto.ErrorSwaggerResponse"
+                        }
+                    },
+                    "404": {
+                        "description": "Not Found",
+                        "schema": {
+                            "$ref": "#/definitions/dto.ErrorSwaggerResponse"
+                        }
+                    },
+                    "409": {
+                        "description": "Conflict",
+                        "schema": {
+                            "$ref": "#/definitions/dto.ErrorSwaggerResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/dto.ErrorSwaggerResponse"
+                        }
+                    }
+                }
+            }
+        },
         "/auth/password": {
             "patch": {
                 "security": [
@@ -894,7 +940,6 @@ const docTemplate = `{
                     "type": "string"
                 },
                 "type": {
-                    "description": "income / expense",
                     "type": "string"
                 }
             }
@@ -941,6 +986,17 @@ const docTemplate = `{
                     "$ref": "#/definitions/dto.LoginResponse"
                 },
                 "message": {
+                    "type": "string"
+                },
+                "success": {
+                    "type": "boolean"
+                }
+            }
+        },
+        "dto.LogoutSwaggerResponse": {
+            "type": "object",
+            "properties": {
+                "logout success": {
                     "type": "string"
                 },
                 "success": {

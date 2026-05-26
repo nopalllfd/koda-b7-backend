@@ -16,7 +16,7 @@ func SetupUserWallet(app *gin.Engine, db *pgxpool.Pool) {
 	WalletController := controller.NewWalletController(WalletService)
 
 	user := app.Group("/wallet")
-	user.Use(middleware.VerifyMiddleware)
+	user.Use(middleware.VerifyMiddleware(db))
 	{
 		user.GET("/dashboard", WalletController.GetDashboard)
 

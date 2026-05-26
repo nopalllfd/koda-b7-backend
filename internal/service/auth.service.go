@@ -146,3 +146,15 @@ func (as *AuthService) ChangePassword(ctx context.Context, req dto.ChangePasswor
 
 	return nil
 }
+
+func (as *AuthService) Logout(ctx context.Context, req dto.LogoutRequest) error {
+	return as.authRepo.BlacklistToken(ctx, req.Token, req.ExpiredAt)
+}
+
+func (as *AuthService) ForgotPassword(ctx context.Context, email string) error {
+	if user, err := as.authRepo.GetUserByEmail(ctx, email); err != nil {
+		return nil
+	}
+
+	return nil
+}

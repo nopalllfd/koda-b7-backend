@@ -120,7 +120,6 @@ func (uc *UserController) EditProfile(ctx *gin.Context) {
 			return
 		}
 
-		// kirim filepath ke service
 		profile.PhotoPath = dst
 	}
 

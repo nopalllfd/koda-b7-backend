@@ -1,5 +1,7 @@
 package dto
 
+import "time"
+
 type LoginRequest struct {
 	Email    string `json:"email" binding:"required,email" example:"naufal@test.com"`
 	Password string `json:"password" binding:"required,min=8" example:"12345678"`
@@ -48,4 +50,14 @@ type ErrorSwaggerResponse struct {
 	Success bool   `json:"success" example:"false"`
 	Message string `json:"message" example:"bad request"`
 	Error   string `json:"error,omitempty" example:"validation error"`
+}
+
+type LogoutRequest struct {
+	Token     string
+	ExpiredAt time.Time
+}
+
+type LogoutSwaggerResponse struct {
+	Success bool   `json:"success"`
+	Message string `json:"logout success"`
 }

@@ -5,10 +5,8 @@ import (
 	"backend-golang/internal/model"
 	"context"
 	"errors"
-	"log"
 
 	"github.com/jackc/pgx/v5"
-	"github.com/jackc/pgx/v5/pgconn"
 	"github.com/jackc/pgx/v5/pgxpool"
 )
 
@@ -68,16 +66,7 @@ func (ur *UserRepository) Edit(
 	)
 
 	if err != nil {
-
-		log.Println("REPO ERROR:", err)
-
-		var pgErr *pgconn.PgError
-
-		if errors.As(err, &pgErr) {
-			log.Println("PG ERROR:", pgErr.Code, pgErr.Message)
-		}
-
-		return 0, errs.ErrInternalServer
+		return 0, err
 	}
 
 	return commandTag.RowsAffected(), nil

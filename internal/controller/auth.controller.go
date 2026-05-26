@@ -307,3 +307,36 @@ func (ac *AuthController) UpdateUserPassword(ctx *gin.Context) {
 
 	utils.SendResponse(ctx, http.StatusOK, true, "update password success", nil, nil)
 }
+
+// Edit User Profile
+//
+//	@Summary		Delete user token
+//	@Description	for logout
+//	@Tags			auth
+//	@Security		ApiKeyAuth
+//	@Success		200			{object}	dto.LogoutSwaggerResponse
+//	@Failure		401			{object}	dto.ErrorSwaggerResponse
+//	@Failure		404			{object}	dto.ErrorSwaggerResponse
+//	@Failure		409			{object}	dto.ErrorSwaggerResponse
+//	@Failure		500			{object}	dto.ErrorSwaggerResponse
+//	@Router			/auth/logout [delete]
+func (ac *AuthController) Logout(ctx *gin.Context) {
+	token, _ := ctx.Get("claims")
+	claims := token.(pkg.Claims)
+
+	authHeader := ctx.GetHeader("Authorization")
+	tokenString := strings.Replace(authHeader, "Bearer ", "", 1)
+	data := dto.LogoutRequest{
+		Token:     tokenString,
+		ExpiredAt: claims.ExpiresAt.Time,
+	}
+	ac.authService.Logout(ctx.Request.Context(), data)
+}
+
+func (ac *AuthController) ForgotPassword(ctx *gin.Context) {
+	var email string
+	if err := ctx.ShouldBindJSON(&email); err != nil {
+		utils.SendResponse(ctx, http.StatusBadRequest, false, "invalid request", nil, err.Error())
+		return
+	}
+}

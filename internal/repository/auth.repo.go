@@ -4,6 +4,7 @@ import (
 	"backend-golang/internal/model"
 	"context"
 	"fmt"
+	"time"
 
 	"github.com/jackc/pgx/v5/pgxpool"
 )
@@ -97,4 +98,8 @@ func (ar *AuthRepository) SetPassword(ctx context.Context, newPass string, id in
 	return nil
 }
 
-// func (ar *AuthRepository) GetPin(ctx )
+func (ar *AuthRepository) BlacklistToken(ctx context.Context, token string, expiredAt time.Time) error {
+	sql := `INSERT INTO token_blacklists (token, expired_at) VALUES ($1, $2)`
+	_, err := ar.db.Exec(ctx, sql, token, expiredAt)
+	return err
+}

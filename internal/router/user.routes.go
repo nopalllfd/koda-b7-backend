@@ -17,7 +17,7 @@ func SetupUserRoute(app *gin.Engine, db *pgxpool.Pool) {
 
 	user := app.Group("/user")
 	{
-		user.GET("/profile", middleware.VerifyMiddleware, UserController.GetProfile)
-		user.PUT("/profile", middleware.VerifyMiddleware, UserController.EditProfile)
+		user.GET("/profile", middleware.VerifyMiddleware(db), UserController.GetProfile)
+		user.PUT("/profile", middleware.VerifyMiddleware(db), UserController.EditProfile)
 	}
 }

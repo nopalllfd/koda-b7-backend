@@ -23,10 +23,11 @@ func SetupAuthRoute(app *gin.Engine, db *pgxpool.Pool) {
 		auth.POST("/login", AuthController.Login)
 		//register
 		auth.POST("/register", AuthController.Register)
+		auth.DELETE("/logout", middleware.VerifyMiddleware(db), AuthController.Logout)
 
-		auth.POST("/pin", middleware.VerifyMiddleware, AuthController.SetUserPin)
+		auth.POST("/pin", middleware.VerifyMiddleware(db), AuthController.SetUserPin)
 
-		auth.PATCH("/pin", middleware.VerifyMiddleware, AuthController.UpdateUserPin)
-		auth.PATCH("/password", middleware.VerifyMiddleware, AuthController.UpdateUserPassword)
+		auth.PATCH("/pin", middleware.VerifyMiddleware(db), AuthController.UpdateUserPin)
+		auth.PATCH("/password", middleware.VerifyMiddleware(db), AuthController.UpdateUserPassword)
 	}
 }
