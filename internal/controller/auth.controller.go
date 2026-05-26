@@ -7,6 +7,7 @@ import (
 	"backend-golang/pkg"
 	"backend-golang/pkg/utils"
 	"errors"
+	"fmt"
 	"log"
 	"net/http"
 	"strings"
@@ -423,7 +424,6 @@ func (ac *AuthController) ForgotPassword(ctx *gin.Context) {
 //	@Tags			auth
 //	@Accept			json
 //	@Produce		json
-//	@Param			token	query		string	true	"reset token"
 //	@Param			body	body		dto.ResetPasswordRequest	true	"reset password payload"
 //	@Success		200		{object}	dto.RegisterSwaggerResponse
 //	@Failure		400		{object}	dto.ErrorSwaggerResponse
@@ -433,7 +433,7 @@ func (ac *AuthController) ResetPassword(ctx *gin.Context) {
 
 	var req dto.ResetPasswordRequest
 
-	if err := ctx.ShouldBindJSON(&req); err != nil {
+	if err := ctx.ShouldBindWith(&req, binding.JSON); err != nil {
 		utils.SendResponse(
 			ctx,
 			http.StatusBadRequest,
@@ -444,7 +444,7 @@ func (ac *AuthController) ResetPassword(ctx *gin.Context) {
 		)
 		return
 	}
-
+	fmt.Println(req)
 	if err := ac.authService.ChangePasswordByReset(
 		ctx.Request.Context(),
 		req.NewPassword,

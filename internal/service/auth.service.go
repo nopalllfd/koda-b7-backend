@@ -186,7 +186,8 @@ func (as *AuthService) ChangePasswordByReset(ctx context.Context, newPas string,
 		return nil
 	}
 
-	var hc *pkg.HashConfig
+	var hc pkg.HashConfig
+	hc.OwaspRecomendedHashConfig()
 	hashedPass := hc.Hash(newPas)
 	if err := as.authRepo.SetPassword(ctx, hashedPass, userID); err != nil {
 		return err
