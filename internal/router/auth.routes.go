@@ -26,8 +26,9 @@ func SetupAuthRoute(app *gin.Engine, db *pgxpool.Pool) {
 		auth.DELETE("/logout", middleware.VerifyMiddleware(db), AuthController.Logout)
 
 		auth.POST("/pin", middleware.VerifyMiddleware(db), AuthController.SetUserPin)
-
+		auth.POST("/forgot-password", middleware.VerifyMiddleware(db), AuthController.ForgotPassword)
 		auth.PATCH("/pin", middleware.VerifyMiddleware(db), AuthController.UpdateUserPin)
+		auth.PATCH("/reset-password", AuthController.ResetPassword)
 		auth.PATCH("/password", middleware.VerifyMiddleware(db), AuthController.UpdateUserPassword)
 	}
 }

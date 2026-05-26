@@ -17,3 +17,8 @@ type User struct {
 type UserPIN struct {
 	Pin *string `db:"pin"`
 }
+
+type ValidateChangedPassword struct {
+	Id    int    `db:"id"`
+	Email string `db:"email"`
+}

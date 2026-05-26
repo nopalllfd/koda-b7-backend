@@ -44,6 +44,13 @@ definitions:
         example: false
         type: boolean
     type: object
+  dto.ForgotPasswordRequest:
+    properties:
+      email:
+        type: string
+    required:
+    - email
+    type: object
   dto.IncomeExpenseChart:
     properties:
       amount:
@@ -191,6 +198,17 @@ definitions:
       success:
         type: boolean
     type: object
+  dto.ResetPasswordRequest:
+    properties:
+      new_password:
+        minLength: 8
+        type: string
+      token:
+        type: string
+    required:
+    - new_password
+    - token
+    type: object
   dto.TopupRequest:
     properties:
       amount:
@@ -300,6 +318,38 @@ info:
   title: Backend Koda 7
   version: "1.0"
 paths:
+  /auth/forgot-password:
+    post:
+      consumes:
+      - application/json
+      description: send reset password link to email
+      parameters:
+      - description: forgot password payload
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/dto.ForgotPasswordRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/dto.RegisterSwaggerResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/dto.ErrorSwaggerResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/dto.ErrorSwaggerResponse'
+      security:
+      - ApiKeyAuth: []
+      summary: Forgot password
+      tags:
+      - auth
   /auth/login:
     post:
       consumes:
@@ -494,6 +544,41 @@ paths:
           schema:
             $ref: '#/definitions/dto.ErrorSwaggerResponse'
       summary: Register user
+      tags:
+      - auth
+  /auth/reset-password:
+    patch:
+      consumes:
+      - application/json
+      description: reset password using reset token
+      parameters:
+      - description: reset token
+        in: query
+        name: token
+        required: true
+        type: string
+      - description: reset password payload
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/dto.ResetPasswordRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/dto.RegisterSwaggerResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/dto.ErrorSwaggerResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/dto.ErrorSwaggerResponse'
+      summary: Reset password
       tags:
       - auth
   /transactions:

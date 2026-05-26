@@ -333,10 +333,141 @@ func (ac *AuthController) Logout(ctx *gin.Context) {
 	ac.authService.Logout(ctx.Request.Context(), data)
 }
 
+// Forgot Password
+//
+//	@Summary		Forgot password
+//	@Description	send reset password link to email
+//	@Tags			auth
+//	@Security		ApiKeyAuth
+//	@Accept			json
+//	@Produce		json
+//	@Param			body	body		dto.ForgotPasswordRequest	true	"forgot password payload"
+//	@Success		200		{object}	dto.RegisterSwaggerResponse
+//	@Failure		400		{object}	dto.ErrorSwaggerResponse
+//	@Failure		500		{object}	dto.ErrorSwaggerResponse
+//	@Router			/auth/forgot-password [post]
 func (ac *AuthController) ForgotPassword(ctx *gin.Context) {
-	var email string
-	if err := ctx.ShouldBindJSON(&email); err != nil {
-		utils.SendResponse(ctx, http.StatusBadRequest, false, "invalid request", nil, err.Error())
+
+	var req dto.ForgotPasswordRequest
+
+	if err := ctx.ShouldBindJSON(&req); err != nil {
+
+		if strings.Contains(err.Error(), "Email") {
+
+			if strings.Contains(err.Error(), "required") {
+				utils.SendResponse(
+					ctx,
+					http.StatusBadRequest,
+					false,
+					"email is required",
+					nil,
+					err.Error(),
+				)
+				return
+			}
+
+			if strings.Contains(err.Error(), "email") {
+				utils.SendResponse(
+					ctx,
+					http.StatusBadRequest,
+					false,
+					"invalid email format",
+					nil,
+					err.Error(),
+				)
+				return
+			}
+		}
+
+		utils.SendResponse(
+			ctx,
+			http.StatusBadRequest,
+			false,
+			"invalid request body",
+			nil,
+			err.Error(),
+		)
 		return
 	}
+
+	if err := ac.authService.ForgotPassword(
+		ctx.Request.Context(),
+		req.Email,
+	); err != nil {
+
+		utils.SendResponse(
+			ctx,
+			http.StatusInternalServerError,
+			false,
+			"forgot password failed",
+			nil,
+			err.Error(),
+		)
+		return
+	}
+
+	utils.SendResponse(
+		ctx,
+		http.StatusOK,
+		true,
+		"reset password link sent",
+		nil,
+		nil,
+	)
+}
+
+// Reset Password
+//
+//	@Summary		Reset password
+//	@Description	reset password using reset token
+//	@Tags			auth
+//	@Accept			json
+//	@Produce		json
+//	@Param			token	query		string	true	"reset token"
+//	@Param			body	body		dto.ResetPasswordRequest	true	"reset password payload"
+//	@Success		200		{object}	dto.RegisterSwaggerResponse
+//	@Failure		400		{object}	dto.ErrorSwaggerResponse
+//	@Failure		500		{object}	dto.ErrorSwaggerResponse
+//	@Router			/auth/reset-password [patch]
+func (ac *AuthController) ResetPassword(ctx *gin.Context) {
+
+	var req dto.ResetPasswordRequest
+
+	if err := ctx.ShouldBindJSON(&req); err != nil {
+		utils.SendResponse(
+			ctx,
+			http.StatusBadRequest,
+			false,
+			"invalid request body",
+			nil,
+			err.Error(),
+		)
+		return
+	}
+
+	if err := ac.authService.ChangePasswordByReset(
+		ctx.Request.Context(),
+		req.NewPassword,
+		req.Token,
+	); err != nil {
+
+		utils.SendResponse(
+			ctx,
+			http.StatusBadRequest,
+			false,
+			"reset password failed",
+			nil,
+			err.Error(),
+		)
+		return
+	}
+
+	utils.SendResponse(
+		ctx,
+		http.StatusOK,
+		true,
+		"reset password success",
+		nil,
+		nil,
+	)
 }

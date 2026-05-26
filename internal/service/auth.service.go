@@ -5,9 +5,12 @@ import (
 	errs "backend-golang/internal/err"
 	"backend-golang/internal/repository"
 	"backend-golang/pkg"
+	"backend-golang/pkg/utils"
 	"context"
 	"errors"
+	"fmt"
 	"log"
+	"os"
 
 	"github.com/jackc/pgx/v5"
 )
@@ -16,6 +19,7 @@ type AuthService struct {
 	authRepo   *repository.AuthRepository
 	userRepo   *repository.UserRepository
 	walletRepo *repository.WalletRepository
+	db         *repository.DBTX
 }
 
 func NewAuthService(authRepo *repository.AuthRepository, userRepo *repository.UserRepository, walletRepo *repository.WalletRepository) *AuthService {
@@ -152,8 +156,43 @@ func (as *AuthService) Logout(ctx context.Context, req dto.LogoutRequest) error 
 }
 
 func (as *AuthService) ForgotPassword(ctx context.Context, email string) error {
-	if user, err := as.authRepo.GetUserByEmail(ctx, email); err != nil {
+	clientUrl := os.Getenv("CLIENT_URL")
+	user, err := as.authRepo.GetUserByEmail(ctx, email)
+	if err != nil {
+		return err
+	}
+
+	//gen token
+	token := utils.GenerateRandomToken()
+
+	// save token to db
+	if err := as.authRepo.SaveTokenForgotPass(ctx, token, user.Id); err != nil {
+		return err
+	}
+
+	// print link
+	resetLink := fmt.Sprintf(
+		"%s/reset-password?token=%s",
+		clientUrl,
+		token,
+	)
+	log.Println(resetLink)
+	return nil
+}
+
+func (as *AuthService) ChangePasswordByReset(ctx context.Context, newPas string, token string) error {
+	userID, err := as.authRepo.TokenValidCheck(ctx, token)
+	if err != nil {
 		return nil
+	}
+
+	var hc *pkg.HashConfig
+	hashedPass := hc.Hash(newPas)
+	if err := as.authRepo.SetPassword(ctx, hashedPass, userID); err != nil {
+		return err
+	}
+	if err := as.authRepo.ValidateChangedPassword(ctx, token); err != nil {
+		return err
 	}
 
 	return nil
