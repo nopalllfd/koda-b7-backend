@@ -391,13 +391,6 @@ const docTemplate = `{
                 "summary": "Reset password",
                 "parameters": [
                     {
-                        "type": "string",
-                        "description": "reset token",
-                        "name": "token",
-                        "in": "query",
-                        "required": true
-                    },
-                    {
                         "description": "reset password payload",
                         "name": "body",
                         "in": "body",
@@ -853,7 +846,7 @@ const docTemplate = `{
                     }
                 }
             },
-            "put": {
+            "patch": {
                 "security": [
                     {
                         "ApiKeyAuth": []

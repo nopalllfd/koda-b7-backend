@@ -5,11 +5,15 @@ import (
 	errs "backend-golang/internal/err"
 	"backend-golang/internal/model"
 	"context"
+	"encoding/json"
 	"errors"
+	"fmt"
 	"log"
+	"time"
 
 	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgconn"
+	"github.com/redis/go-redis/v9"
 )
 
 type DBTX interface {
@@ -19,10 +23,13 @@ type DBTX interface {
 }
 
 type TransactionRepository struct {
+	rc *redis.Client
 }
 
-func NewTransactionRepo() *TransactionRepository {
-	return &TransactionRepository{}
+func NewTransactionRepo(rc *redis.Client) *TransactionRepository {
+	return &TransactionRepository{
+		rc: rc,
+	}
 }
 
 func (tr *TransactionRepository) GetPinByUserId(ctx context.Context, dbtx DBTX, id int) (string, error) {
@@ -41,9 +48,17 @@ func (tr *TransactionRepository) GetPinByUserId(ctx context.Context, dbtx DBTX, 
 	return pin, nil
 }
 
-func (tr *TransactionRepository) GetAllByUserId(ctx context.Context, dbtx DBTX, id int, query dto.TransactionQuery) ([]model.TransactionResponse, int64, error) {
+func (tr *TransactionRepository) GetAllByUserId(
+	ctx context.Context,
+	dbtx DBTX,
+	id int,
+	query dto.TransactionQuery,
+) ([]model.TransactionResponse, int64, error) {
 
-	// default pagination
+	// =========================
+	// DEFAULT PAGINATION
+	// =========================
+
 	if query.Page <= 0 {
 		query.Page = 1
 	}
@@ -52,12 +67,51 @@ func (tr *TransactionRepository) GetAllByUserId(ctx context.Context, dbtx DBTX, 
 		query.Limit = 10
 	}
 
-	// max limit protection
 	if query.Limit > 100 {
 		query.Limit = 100
 	}
 
 	offset := (query.Page - 1) * query.Limit
+
+	// =========================
+	// CACHE KEY
+	// =========================
+
+	key := fmt.Sprintf(
+		"trx:user:%d:page:%d:limit:%d",
+		id,
+		query.Page,
+		query.Limit,
+	)
+
+	// =========================
+	// GET CACHE
+	// =========================
+
+	cached, err := tr.rc.Get(
+		ctx,
+		key,
+	).Result()
+
+	if err == nil {
+
+		var result struct {
+			Transactions []model.TransactionResponse `json:"transactions"`
+			Total        int64                       `json:"total"`
+		}
+
+		if err := json.Unmarshal(
+			[]byte(cached),
+			&result,
+		); err == nil {
+
+			return result.Transactions, result.Total, nil
+		}
+	}
+
+	// =========================
+	// MAIN QUERY
+	// =========================
 
 	sql := `
 	WITH MyWallet AS (
@@ -152,26 +206,16 @@ func (tr *TransactionRepository) GetAllByUserId(ctx context.Context, dbtx DBTX, 
 		(tp.transaction_id IS NOT NULL 
 		OR tf.transaction_id IS NOT NULL)
 
-		AND (
-			$2 = ''
-			OR trx.reference_code ILIKE '%' || $2 || '%'
-			OR COALESCE(
-				tp.counterparty_name,
-				tf.counterparty_name
-			) ILIKE '%' || $2 || '%'
-		)
-
 	ORDER BY trx.created_at DESC
 
-	LIMIT $3
-	OFFSET $4
+	LIMIT $2
+	OFFSET $3
 	`
 
 	rows, err := dbtx.Query(
 		ctx,
 		sql,
 		id,
-		query.Search,
 		query.Limit,
 		offset,
 	)
@@ -183,6 +227,7 @@ func (tr *TransactionRepository) GetAllByUserId(ctx context.Context, dbtx DBTX, 
 	var transactions []model.TransactionResponse
 
 	for rows.Next() {
+
 		var item model.TransactionResponse
 
 		err := rows.Scan(
@@ -201,7 +246,10 @@ func (tr *TransactionRepository) GetAllByUserId(ctx context.Context, dbtx DBTX, 
 			return nil, 0, err
 		}
 
-		transactions = append(transactions, item)
+		transactions = append(
+			transactions,
+			item,
+		)
 	}
 
 	if err := rows.Err(); err != nil {
@@ -221,35 +269,17 @@ func (tr *TransactionRepository) GetAllByUserId(ctx context.Context, dbtx DBTX, 
 	),
 
 	MyTopups AS (
-		SELECT 
-			tp.transaction_id,
-			pm.name AS counterparty_name
-		FROM topups tp
-		LEFT JOIN payment_methods pm 
-			ON tp.method_id = pm.id
-		WHERE tp.wallet_id = (SELECT id FROM MyWallet)
+		SELECT transaction_id
+		FROM topups
+		WHERE wallet_id = (SELECT id FROM MyWallet)
 	),
 
 	MyTransfers AS (
-		SELECT 
-			tf.transaction_id,
-			p.full_name AS counterparty_name
-
-		FROM transfers tf
-
-		JOIN wallets w_lawan 
-			ON w_lawan.id = CASE 
-				WHEN tf.receiver_wallet_id = (SELECT id FROM MyWallet)
-					THEN tf.sender_wallet_id 
-				ELSE tf.receiver_wallet_id 
-			END
-
-		JOIN profiles p 
-			ON p.user_id = w_lawan.user_id
-
+		SELECT transaction_id
+		FROM transfers
 		WHERE 
-			tf.sender_wallet_id = (SELECT id FROM MyWallet)
-			OR tf.receiver_wallet_id = (SELECT id FROM MyWallet)
+			sender_wallet_id = (SELECT id FROM MyWallet)
+			OR receiver_wallet_id = (SELECT id FROM MyWallet)
 	)
 
 	SELECT COUNT(*)
@@ -265,15 +295,6 @@ func (tr *TransactionRepository) GetAllByUserId(ctx context.Context, dbtx DBTX, 
 	WHERE 
 		(tp.transaction_id IS NOT NULL 
 		OR tf.transaction_id IS NOT NULL)
-
-		AND (
-			$2 = ''
-			OR trx.reference_code ILIKE '%' || $2 || '%'
-			OR COALESCE(
-				tp.counterparty_name,
-				tf.counterparty_name
-			) ILIKE '%' || $2 || '%'
-		)
 	`
 
 	var total int64
@@ -282,11 +303,34 @@ func (tr *TransactionRepository) GetAllByUserId(ctx context.Context, dbtx DBTX, 
 		ctx,
 		countSQL,
 		id,
-		query.Search,
 	).Scan(&total)
 
 	if err != nil {
 		return nil, 0, err
+	}
+
+	// =========================
+	// SET CACHE
+	// =========================
+
+	cacheData := struct {
+		Transactions []model.TransactionResponse `json:"transactions"`
+		Total        int64                       `json:"total"`
+	}{
+		Transactions: transactions,
+		Total:        total,
+	}
+
+	jsonData, err := json.Marshal(cacheData)
+
+	if err == nil {
+
+		tr.rc.Set(
+			ctx,
+			key,
+			jsonData,
+			30*time.Second,
+		)
 	}
 
 	return transactions, total, nil
@@ -533,4 +577,32 @@ ORDER BY trx_date ASC;
 	}
 
 	return result, nil
+}
+
+func (tr *TransactionRepository) DeleteTransactionCache(
+	ctx context.Context,
+	userID int,
+) error {
+
+	keys, err := tr.rc.Keys(
+		ctx,
+		fmt.Sprintf(
+			"trx:user:%d:*",
+			userID,
+		),
+	).Result()
+
+	if err != nil {
+		return err
+	}
+
+	if len(keys) > 0 {
+
+		return tr.rc.Del(
+			ctx,
+			keys...,
+		).Err()
+	}
+
+	return nil
 }

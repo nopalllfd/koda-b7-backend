@@ -15,8 +15,8 @@ type Profiles struct {
 }
 
 type ProfileUpdateRequest struct {
-	FullName  string                `form:"fullname" binding:"required"`
-	Phone     string                `form:"phone" binding:"required"`
+	FullName  string                `form:"fullname"`
+	Phone     string                `form:"phone"`
 	Photo     *multipart.FileHeader `form:"photo"`
 	PhotoPath string                `json:"-"`
 }

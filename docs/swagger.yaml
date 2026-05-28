@@ -552,11 +552,6 @@ paths:
       - application/json
       description: reset password using reset token
       parameters:
-      - description: reset token
-        in: query
-        name: token
-        required: true
-        type: string
       - description: reset password payload
         in: body
         name: body
@@ -852,7 +847,7 @@ paths:
       summary: Get user profile
       tags:
       - user
-    put:
+    patch:
       consumes:
       - multipart/form-data
       description: update authenticated user profile

@@ -8,12 +8,13 @@ import (
 
 	"github.com/gin-gonic/gin"
 	"github.com/jackc/pgx/v5/pgxpool"
+	"github.com/redis/go-redis/v9"
 )
 
-func SetupAuthRoute(app *gin.Engine, db *pgxpool.Pool) {
+func SetupAuthRoute(app *gin.Engine, db *pgxpool.Pool, rc *redis.Client) {
 	UserRepo := repository.NewUserRepo(db)
 	WalletRepo := repository.NewWalletRepo(db)
-	AuthRepo := repository.NewAuthRepo(db)
+	AuthRepo := repository.NewAuthRepo(db, rc)
 	AuthService := service.NewAuthService(AuthRepo, UserRepo, WalletRepo)
 	AuthController := controller.NewAuthController(AuthService)
 
@@ -23,12 +24,12 @@ func SetupAuthRoute(app *gin.Engine, db *pgxpool.Pool) {
 		auth.POST("/login", AuthController.Login)
 		//register
 		auth.POST("/register", AuthController.Register)
-		auth.DELETE("/logout", middleware.VerifyMiddleware(db), AuthController.Logout)
+		auth.DELETE("/logout", middleware.VerifyMiddleware(rc), AuthController.Logout)
 
-		auth.POST("/pin", middleware.VerifyMiddleware(db), AuthController.SetUserPin)
-		auth.POST("/forgot-password", middleware.VerifyMiddleware(db), AuthController.ForgotPassword)
-		auth.PATCH("/pin", middleware.VerifyMiddleware(db), AuthController.UpdateUserPin)
+		auth.POST("/pin", middleware.VerifyMiddleware(rc), AuthController.SetUserPin)
+		auth.POST("/forgot-password", middleware.VerifyMiddleware(rc), AuthController.ForgotPassword)
+		auth.PATCH("/pin", middleware.VerifyMiddleware(rc), AuthController.UpdateUserPin)
 		auth.PATCH("/reset-password", AuthController.ResetPassword)
-		auth.PATCH("/password", middleware.VerifyMiddleware(db), AuthController.UpdateUserPassword)
+		auth.PATCH("/password", middleware.VerifyMiddleware(rc), AuthController.UpdateUserPassword)
 	}
 }

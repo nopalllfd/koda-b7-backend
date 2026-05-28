@@ -6,15 +6,18 @@ import (
 	"time"
 
 	"github.com/jackc/pgx/v5/pgxpool"
+	"github.com/redis/go-redis/v9"
 )
 
 type AuthRepository struct {
 	dbtx DBTX
+	rc   *redis.Client
 }
 
-func NewAuthRepo(db *pgxpool.Pool) *AuthRepository {
+func NewAuthRepo(db *pgxpool.Pool, rc *redis.Client) *AuthRepository {
 	return &AuthRepository{
 		dbtx: db,
+		rc:   rc,
 	}
 }
 
@@ -195,22 +198,18 @@ func (ar *AuthRepository) BlacklistToken(
 	expiredAt time.Time,
 ) error {
 
-	sql := `
-	INSERT INTO token_blacklists (
-		token,
-		expired_at
-	)
-	VALUES ($1, $2)
-	`
+	ttl := time.Until(expiredAt)
 
-	_, err := ar.dbtx.Exec(
+	if ttl < 0 {
+		ttl = 0
+	}
+
+	return ar.rc.Set(
 		ctx,
-		sql,
-		token,
-		expiredAt,
-	)
-
-	return err
+		"bl:"+token,
+		"true",
+		ttl,
+	).Err()
 }
 
 func (ar *AuthRepository) SaveTokenForgotPass(

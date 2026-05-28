@@ -8,20 +8,21 @@ import (
 
 	"github.com/gin-gonic/gin"
 	"github.com/jackc/pgx/v5/pgxpool"
+	"github.com/redis/go-redis/v9"
 )
 
-func SetupTransactionRoute(app *gin.Engine, db *pgxpool.Pool) {
-	TransactionRepo := repository.NewTransactionRepo()
+func SetupTransactionRoute(app *gin.Engine, db *pgxpool.Pool, rc *redis.Client) {
+	TransactionRepo := repository.NewTransactionRepo(rc)
 	TransactionService := service.NewTransactionService(TransactionRepo, db)
 	TransactionController := controller.NewTransactionController(TransactionService)
 	trx := app.Group("/transactions")
 	{
-		trx.POST("/pin", middleware.VerifyMiddleware(db), TransactionController.CheckPin)
-		trx.POST("/topup", middleware.VerifyMiddleware(db), TransactionController.Topup)
-		trx.POST("/transfer", middleware.VerifyMiddleware(db), TransactionController.Transfer)
-		trx.GET("", middleware.VerifyMiddleware(db), TransactionController.GetAllUserTransaction)
+		trx.POST("/pin", middleware.VerifyMiddleware(rc), TransactionController.CheckPin)
+		trx.POST("/topup", middleware.VerifyMiddleware(rc), TransactionController.Topup)
+		trx.POST("/transfer", middleware.VerifyMiddleware(rc), TransactionController.Transfer)
+		trx.GET("", middleware.VerifyMiddleware(rc), TransactionController.GetAllUserTransaction)
 		trx.GET("/payments", TransactionController.GetAllPaymentMethods)
-		trx.GET("/chart", middleware.VerifyMiddleware(db), TransactionController.GetChartData)
-		trx.GET("/transfer/receivers", middleware.VerifyMiddleware(db), TransactionController.GetAllReceiverWithPagination)
+		trx.GET("/chart", middleware.VerifyMiddleware(rc), TransactionController.GetChartData)
+		trx.GET("/transfer/receivers", middleware.VerifyMiddleware(rc), TransactionController.GetAllReceiverWithPagination)
 	}
 }

@@ -77,7 +77,7 @@ func (uc *UserController) GetProfile(ctx *gin.Context) {
 //	@Failure		404			{object}	dto.ErrorSwaggerResponse
 //	@Failure		409			{object}	dto.ErrorSwaggerResponse
 //	@Failure		500			{object}	dto.ErrorSwaggerResponse
-//	@Router			/user/profile [put]
+//	@Router			/user/profile [patch]
 func (uc *UserController) EditProfile(ctx *gin.Context) {
 	token, _ := ctx.Get("claims")
 	claims := token.(pkg.Claims)

@@ -37,8 +37,13 @@ func main() {
 		log.Fatalf("DB connection error. \ncause: %s", err.Error())
 	}
 	defer db.Close()
+	rc, err := config.ConnectRedis()
+	if err != nil {
+		log.Fatalf("Redis connection error. \ncause : %s", err.Error())
+	}
+	defer rc.Close()
 
 	// route
-	router.InitRoutes(app, db)
+	router.InitRoutes(app, db, rc)
 	app.Run("localhost:5000")
 }

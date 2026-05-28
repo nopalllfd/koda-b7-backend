@@ -4,7 +4,7 @@ import "time"
 
 type LoginRequest struct {
 	Email    string `json:"email" binding:"required,email" example:"naufal@test.com"`
-	Password string `json:"password" binding:"required,min=8" example:"12345678"`
+	Password string `json:"password" binding:"required,min=8" example:"87654321"`
 }
 
 type RegisterRequest struct {
