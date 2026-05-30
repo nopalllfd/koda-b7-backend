@@ -67,10 +67,12 @@ type TransactionQuery struct {
 }
 
 type PaginationMeta struct {
-	Page       int   `json:"page"`
-	Limit      int   `json:"limit"`
-	Total      int64 `json:"total"`
-	TotalPages int   `json:"total_pages"`
+	Page       int    `json:"page"`
+	Limit      int    `json:"limit"`
+	Total      int64  `json:"total"`
+	TotalPages int    `json:"total_pages"`
+	NextLink   string `json:"next_link"`
+	PrevLink   string `json:"prev_link"`
 }
 
 type PaymentMethods struct {

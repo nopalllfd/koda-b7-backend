@@ -10,6 +10,7 @@ import (
 	"fmt"
 	"log"
 	"math"
+	"os"
 	"time"
 
 	"github.com/jackc/pgx/v5/pgxpool"
@@ -46,6 +47,14 @@ func (ts *TransactionService) CheckPin(ctx context.Context, userID int, pin stri
 }
 
 func (ts *TransactionService) GetAllUserTransaction(ctx context.Context, userID int, query dto.TransactionQuery) (*dto.TransactionPaginationResponse, error) {
+	log.Println(query)
+	limit := query.Limit
+	if limit <= 0 {
+		limit = 10
+	}
+	if query.Page <= 0 {
+		query.Page = 1
+	}
 	transactions, total, err := ts.transactionRepo.GetAllByUserId(
 		ctx,
 		ts.db,
@@ -82,16 +91,29 @@ func (ts *TransactionService) GetAllUserTransaction(ctx context.Context, userID 
 	}
 
 	// default limit protection
-	log.Println(query)
-	limit := query.Limit
-	if limit <= 0 {
-		limit = 10
-	}
-	if query.Page <= 0 {
-		query.Page = 1
-	}
 
 	totalPages := int(math.Ceil(float64(total) / float64(limit)))
+
+	nextLink := ""
+	prevLink := ""
+	if query.Page < totalPages {
+		nextLink = fmt.Sprintf(
+			"%s/transactions?page=%d&limit=%d&search=%s",
+			os.Getenv("URL"),
+			query.Page+1,
+			limit,
+			query.Search,
+		)
+	}
+	if query.Page > 1 {
+		prevLink = fmt.Sprintf(
+			"%s/transactions?page=%d&limit=%d&search=%s",
+			os.Getenv("URL"),
+			query.Page-1,
+			limit,
+			query.Search,
+		)
+	}
 
 	result := &dto.TransactionPaginationResponse{
 		Data: response,
@@ -100,6 +122,8 @@ func (ts *TransactionService) GetAllUserTransaction(ctx context.Context, userID 
 			Limit:      limit,
 			Total:      total,
 			TotalPages: totalPages,
+			NextLink:   nextLink,
+			PrevLink:   prevLink,
 		},
 	}
 
@@ -387,6 +411,26 @@ func (ts *TransactionService) GetAllReceivers(
 
 	totalPages := int(math.Ceil(float64(total) / float64(limit)))
 
+	nextLink := ""
+	prevLink := ""
+	if query.Page < totalPages {
+		nextLink = fmt.Sprintf(
+			"%s/transactions/transfer/receivers?page=%d&limit=%d&search%s",
+			os.Getenv("URL"),
+			query.Page+1,
+			limit,
+			query.Search,
+		)
+	}
+	if query.Page > 1 {
+		prevLink = fmt.Sprintf(
+			"%s/transactions/transfer/receivers?page=%d&limit=%d&search=%s",
+			os.Getenv("URL"),
+			query.Page-1,
+			limit,
+			query.Search,
+		)
+	}
 	result := dto.ReceiverPaginationResponse{
 		Data: response,
 		Meta: dto.PaginationMeta{
@@ -394,6 +438,8 @@ func (ts *TransactionService) GetAllReceivers(
 			Limit:      limit,
 			Total:      total,
 			TotalPages: totalPages,
+			NextLink:   nextLink,
+			PrevLink:   prevLink,
 		},
 	}
 
