@@ -1,0 +1,13 @@
+CREATE TABLE wallets (
+id SERIAL PRIMARY KEY,
+user_id INTEGER NOT NULL UNIQUE,
+balance NUMERIC(15,2) DEFAULT 0,
+created_at TIMESTAMP DEFAULT NOW(),
+updated_at TIMESTAMP,
+
+CONSTRAINT fk_wallet_user
+    FOREIGN KEY (user_id)
+    REFERENCES users(id)
+    ON DELETE CASCADE
+
+);
