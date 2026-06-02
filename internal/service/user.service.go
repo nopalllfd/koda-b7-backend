@@ -100,7 +100,3 @@ func (us *UserService) EditProfile(
 
 	return nil
 }
-
-func (us *UserService) Profileess() error {
-	return nil
-}
