@@ -15,7 +15,7 @@ func SetupTransactionRoute(app *gin.Engine, db *pgxpool.Pool, rc *redis.Client) 
 	TransactionRepo := repository.NewTransactionRepo(rc)
 	TransactionService := service.NewTransactionService(TransactionRepo, db)
 	TransactionController := controller.NewTransactionController(TransactionService)
-	trx := app.Group("/transactions")
+	trx := app.Group("/api/transactions")
 	{
 		trx.POST("/pin", middleware.VerifyMiddleware(rc), TransactionController.CheckPin)
 		trx.POST("/topup", middleware.VerifyMiddleware(rc), TransactionController.Topup)

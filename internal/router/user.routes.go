@@ -16,7 +16,7 @@ func SetupUserRoute(app *gin.Engine, db *pgxpool.Pool, rc *redis.Client) {
 	UserService := service.NewUserService(UserRepo)
 	UserController := controller.NewUserController(UserService)
 
-	user := app.Group("/user")
+	user := app.Group("/api/user")
 	{
 		user.GET("/profile", middleware.VerifyMiddleware(rc), UserController.GetProfile)
 		user.PATCH("/profile", middleware.VerifyMiddleware(rc), UserController.EditProfile)

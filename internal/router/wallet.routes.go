@@ -16,7 +16,7 @@ func SetupUserWallet(app *gin.Engine, db *pgxpool.Pool, rc *redis.Client) {
 	WalletService := service.NewWalletService(WalletRepo)
 	WalletController := controller.NewWalletController(WalletService)
 
-	user := app.Group("/wallet")
+	user := app.Group("/api/wallet")
 	user.Use(middleware.VerifyMiddleware(rc))
 	{
 		user.GET("/dashboard", WalletController.GetDashboard)

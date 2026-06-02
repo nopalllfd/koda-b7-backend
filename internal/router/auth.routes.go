@@ -18,7 +18,7 @@ func SetupAuthRoute(app *gin.Engine, db *pgxpool.Pool, rc *redis.Client) {
 	AuthService := service.NewAuthService(AuthRepo, UserRepo, WalletRepo)
 	AuthController := controller.NewAuthController(AuthService)
 
-	auth := app.Group("/auth")
+	auth := app.Group("/api/auth")
 	{
 		//login
 		auth.POST("/login", AuthController.Login)
