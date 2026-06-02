@@ -32,15 +32,6 @@ tmp/
 coverage.out
 coverage.html
 
-# Uploads
-uploads/
-
-# Documentation
-README.md
-
-# Golang cache (jika ada)
-vendor/
-
 # Air (hot reload)
 .air.toml
 tmp
