@@ -12,5 +12,6 @@ jobs:
       - name: Build And Publish ${{github.repository}}
         uses: macbre/push-to-ghcr@master
         with:
-          github_token: ${{secrets.GITHUB_TOKEN}}
-          image_name: sbwallet-backend
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          registry: ghcr.io
+          image_name: ${{ github.repository_owner }}/sbwallet-backend
