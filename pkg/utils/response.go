@@ -1,7 +1,7 @@
 package utils
 
 import (
-	"backend-golang/internal/dto"
+	"github.com/nopalllfd/koda-b7-backend/internal/dto"
 
 	"github.com/gin-gonic/gin"
 )

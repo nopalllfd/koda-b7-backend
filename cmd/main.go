@@ -4,9 +4,10 @@ import (
 	// untuk logging
 	// informasi dari protocol (status code)
 
-	"backend-golang/internal/config"
-	"backend-golang/internal/router"
 	"log"
+
+	"github.com/nopalllfd/koda-b7-backend/internal/config"
+	"github.com/nopalllfd/koda-b7-backend/internal/router"
 
 	"github.com/gin-gonic/gin" // framework gin gonic
 	"github.com/joho/godotenv" //godotenv
@@ -32,6 +33,7 @@ func main() {
 		log.Fatal("Error loading .env file")
 	}
 	app := gin.Default()
+
 	db, err := config.ConnectDB()
 	if err != nil {
 		log.Fatalf("DB connection error. \ncause: %s", err.Error())

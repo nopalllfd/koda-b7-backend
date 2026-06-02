@@ -1,0 +1,46 @@
+# Git
+.git
+.gitignore
+
+# Docker
+Dockerfile
+docker-compose.yml
+
+# IDE
+.vscode
+.idea
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Environment
+.env
+.env.*
+
+# Logs
+*.log
+logs/
+
+# Build output
+bin/
+dist/
+build/
+tmp/
+
+# Testing
+coverage.out
+coverage.html
+
+# Uploads
+uploads/
+
+# Documentation
+README.md
+
+# Golang cache (jika ada)
+vendor/
+
+# Air (hot reload)
+.air.toml
+tmp

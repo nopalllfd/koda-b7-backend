@@ -422,6 +422,50 @@ const docTemplate = `{
                 }
             }
         },
+        "/auth/user/{id}": {
+            "get": {
+                "description": "get user detail using user id",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "auth"
+                ],
+                "summary": "Get user detail by id",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "user id",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/dto.UserDetailSwaggerResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/dto.ErrorSwaggerResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/dto.ErrorSwaggerResponse"
+                        }
+                    }
+                }
+            }
+        },
         "/transactions": {
             "get": {
                 "security": [
@@ -1065,8 +1109,7 @@ const docTemplate = `{
                 },
                 "password": {
                     "type": "string",
-                    "minLength": 8,
-                    "example": "12345678"
+                    "example": "87654321"
                 }
             }
         },
@@ -1118,8 +1161,14 @@ const docTemplate = `{
                 "limit": {
                     "type": "integer"
                 },
+                "next_link": {
+                    "type": "string"
+                },
                 "page": {
                     "type": "integer"
+                },
+                "prev_link": {
+                    "type": "string"
                 },
                 "total": {
                     "type": "integer"
@@ -1339,36 +1388,34 @@ const docTemplate = `{
                 "amount": {
                     "type": "number"
                 },
-                "counterparty_name": {
-                    "description": "Nama lawan / nama payment method",
+                "counterpartyName": {
                     "type": "string"
                 },
-                "counterparty_phone": {
-                    "description": "Pakai pointer agar aman dari NULL",
+                "counterpartyPhone": {
                     "type": "string"
                 },
-                "created_at": {
+                "createdAt": {
                     "type": "string"
                 },
-                "flow_type": {
-                    "description": "\"in\" atau \"out\"",
+                "flowType": {
                     "type": "string"
                 },
-                "reference_code": {
+                "photo": {
+                    "type": "string"
+                },
+                "referenceCode": {
                     "type": "string"
                 },
                 "status": {
                     "type": "string"
                 },
-                "transaction_id": {
+                "transactionID": {
                     "type": "integer"
                 },
-                "transaction_label": {
-                    "description": "\"Top Up\", \"Transfer Masuk\"",
+                "transactionLabel": {
                     "type": "string"
                 },
-                "transaction_type": {
-                    "description": "\"topup\" atau \"transfer\"",
+                "transactionType": {
                     "type": "string"
                 }
             }
@@ -1416,6 +1463,39 @@ const docTemplate = `{
                 },
                 "transaction_id": {
                     "type": "integer"
+                }
+            }
+        },
+        "dto.UserDetailResponse": {
+            "type": "object",
+            "properties": {
+                "full_name": {
+                    "type": "string"
+                },
+                "id": {
+                    "type": "integer"
+                },
+                "phone": {
+                    "type": "string"
+                },
+                "wallet_id": {
+                    "type": "integer"
+                }
+            }
+        },
+        "dto.UserDetailSwaggerResponse": {
+            "type": "object",
+            "properties": {
+                "data": {
+                    "$ref": "#/definitions/dto.UserDetailResponse"
+                },
+                "message": {
+                    "type": "string",
+                    "example": "success get user detail"
+                },
+                "success": {
+                    "type": "boolean",
+                    "example": true
                 }
             }
         },
