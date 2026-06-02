@@ -27,25 +27,23 @@ import (
 // @name						Authorization
 // @description					Bearer token used for authorization
 func main() {
-	// init
-	err := godotenv.Load()
-	if err != nil {
-		log.Fatal("Error loading .env file")
-	}
+	_ = godotenv.Load()
+
 	app := gin.Default()
 
 	db, err := config.ConnectDB()
 	if err != nil {
-		log.Fatalf("DB connection error. \ncause: %s", err.Error())
+		log.Fatalf("DB connection error: %s", err.Error())
 	}
 	defer db.Close()
+
 	rc, err := config.ConnectRedis()
 	if err != nil {
-		log.Fatalf("Redis connection error. \ncause : %s", err.Error())
+		log.Fatalf("Redis connection error: %s", err.Error())
 	}
 	defer rc.Close()
 
-	// route
 	router.InitRoutes(app, db, rc)
-	app.Run("localhost:5000")
+
+	app.Run("0.0.0.0:5000")
 }
