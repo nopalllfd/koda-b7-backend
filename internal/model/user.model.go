@@ -22,3 +22,10 @@ type ValidateChangedPassword struct {
 	Id    int    `db:"id"`
 	Email string `db:"email"`
 }
+
+type UserDetail struct {
+	ID       int
+	WalletID int
+	FullName string
+	Phone    string
+}

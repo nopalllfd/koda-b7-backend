@@ -1,11 +1,12 @@
 package middleware
 
 import (
-	"backend-golang/internal/dto"
-	"backend-golang/pkg"
 	"errors"
 	"net/http"
 	"strings"
+
+	"github.com/nopalllfd/koda-b7-backend/internal/dto"
+	"github.com/nopalllfd/koda-b7-backend/pkg"
 
 	"github.com/gin-gonic/gin"
 	"github.com/golang-jwt/jwt/v5"

@@ -1,10 +1,10 @@
 package router
 
 import (
-	"backend-golang/internal/controller"
-	"backend-golang/internal/middleware"
-	"backend-golang/internal/repository"
-	"backend-golang/internal/service"
+	"github.com/nopalllfd/koda-b7-backend/internal/controller"
+	"github.com/nopalllfd/koda-b7-backend/internal/middleware"
+	"github.com/nopalllfd/koda-b7-backend/internal/repository"
+	"github.com/nopalllfd/koda-b7-backend/internal/service"
 
 	"github.com/gin-gonic/gin"
 	"github.com/jackc/pgx/v5/pgxpool"
@@ -31,5 +31,6 @@ func SetupAuthRoute(app *gin.Engine, db *pgxpool.Pool, rc *redis.Client) {
 		auth.PATCH("/pin", middleware.VerifyMiddleware(rc), AuthController.UpdateUserPin)
 		auth.PATCH("/reset-password", AuthController.ResetPassword)
 		auth.PATCH("/password", middleware.VerifyMiddleware(rc), AuthController.UpdateUserPassword)
+		auth.GET("/user/:id", AuthController.GetUserDetail)
 	}
 }

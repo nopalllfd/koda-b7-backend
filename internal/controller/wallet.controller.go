@@ -1,11 +1,12 @@
 package controller
 
 import (
-	"backend-golang/internal/service"
-	"backend-golang/pkg"
-	"backend-golang/pkg/utils"
 	"log"
 	"net/http"
+
+	"github.com/nopalllfd/koda-b7-backend/internal/service"
+	"github.com/nopalllfd/koda-b7-backend/pkg"
+	"github.com/nopalllfd/koda-b7-backend/pkg/utils"
 
 	"github.com/gin-gonic/gin"
 )

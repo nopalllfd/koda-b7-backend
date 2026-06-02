@@ -1,10 +1,11 @@
 package repository
 
 import (
-	errs "backend-golang/internal/err"
-	"backend-golang/internal/model"
 	"context"
 	"errors"
+
+	errs "github.com/nopalllfd/koda-b7-backend/internal/err"
+	"github.com/nopalllfd/koda-b7-backend/internal/model"
 
 	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgxpool"

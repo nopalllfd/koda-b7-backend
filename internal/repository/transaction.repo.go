@@ -1,15 +1,16 @@
 package repository
 
 import (
-	"backend-golang/internal/dto"
-	errs "backend-golang/internal/err"
-	"backend-golang/internal/model"
 	"context"
 	"encoding/json"
 	"errors"
 	"fmt"
 	"log"
 	"time"
+
+	"github.com/nopalllfd/koda-b7-backend/internal/dto"
+	errs "github.com/nopalllfd/koda-b7-backend/internal/err"
+	"github.com/nopalllfd/koda-b7-backend/internal/model"
 
 	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgconn"
@@ -122,77 +123,84 @@ func (tr *TransactionRepository) GetAllByUserId(
 	),
 
 	MyTopups AS (
-		SELECT 
-			tp.transaction_id, 
-			tp.amount, 
-			'Top Up' AS label, 
-			'in' AS flow,
-			pm.name AS counterparty_name, 
-			NULL AS counterparty_phone 
-		FROM topups tp
-		LEFT JOIN payment_methods pm 
-			ON tp.method_id = pm.id
-		WHERE tp.wallet_id = (SELECT id FROM MyWallet)
-	),
+	SELECT
+		tp.transaction_id,
+		tp.amount,
+		'Top Up' AS label,
+		'in' AS flow,
+		pm.name AS counterparty_name,
+		NULL AS counterparty_phone,
+		pm.icon AS photo
+	FROM topups tp
+	LEFT JOIN payment_methods pm
+		ON tp.method_id = pm.id
+	WHERE tp.wallet_id = (SELECT id FROM MyWallet)
+),
 
-	MyTransfers AS (
-		SELECT 
-			tf.transaction_id, 
-			tf.amount,
+MyTransfers AS (
+	SELECT
+		tf.transaction_id,
+		tf.amount,
 
-			CASE 
-				WHEN tf.receiver_wallet_id = (SELECT id FROM MyWallet)
-					THEN 'Transfer Masuk'
-				ELSE 'Transfer Keluar'
-			END AS label,
+		CASE
+			WHEN tf.receiver_wallet_id = (SELECT id FROM MyWallet)
+				THEN 'Transfer Masuk'
+			ELSE 'Transfer Keluar'
+		END AS label,
 
-			CASE 
-				WHEN tf.receiver_wallet_id = (SELECT id FROM MyWallet)
-					THEN 'in'
-				ELSE 'out'
-			END AS flow,
+		CASE
+			WHEN tf.receiver_wallet_id = (SELECT id FROM MyWallet)
+				THEN 'in'
+			ELSE 'out'
+		END AS flow,
 
-			p.full_name AS counterparty_name,
-			p.phone AS counterparty_phone
+		p.full_name AS counterparty_name,
+		p.phone AS counterparty_phone,
+		p.photo AS photo
 
-		FROM transfers tf
+	FROM transfers tf
 
-		JOIN wallets w_lawan 
-			ON w_lawan.id = CASE 
-				WHEN tf.receiver_wallet_id = (SELECT id FROM MyWallet)
-					THEN tf.sender_wallet_id 
-				ELSE tf.receiver_wallet_id 
-			END
+	JOIN wallets w_lawan
+		ON w_lawan.id = CASE
+			WHEN tf.receiver_wallet_id = (SELECT id FROM MyWallet)
+				THEN tf.sender_wallet_id
+			ELSE tf.receiver_wallet_id
+		END
 
-		JOIN profiles p 
-			ON p.user_id = w_lawan.user_id
+	JOIN profiles p
+		ON p.user_id = w_lawan.user_id
 
-		WHERE 
-			tf.sender_wallet_id = (SELECT id FROM MyWallet)
-			OR tf.receiver_wallet_id = (SELECT id FROM MyWallet)
-	)
+	WHERE
+		tf.sender_wallet_id = (SELECT id FROM MyWallet)
+		OR tf.receiver_wallet_id = (SELECT id FROM MyWallet)
+)	
 
-	SELECT 
-		trx.id AS transaction_id, 
-		trx.reference_code,
-		trx.type AS transaction_type,
+	SELECT
+	trx.id AS transaction_id,
+	trx.reference_code,
+	trx.type AS transaction_type,
 
-		COALESCE(tp.label, tf.label) AS transaction_label,
-		COALESCE(tp.flow, tf.flow) AS flow_type,
-		COALESCE(tp.amount, tf.amount) AS amount,
+	COALESCE(tp.label, tf.label) AS transaction_label,
+	COALESCE(tp.flow, tf.flow) AS flow_type,
+	COALESCE(tp.amount, tf.amount) AS amount,
 
-		COALESCE(
-			tp.counterparty_name,
-			tf.counterparty_name
-		) AS counterparty_name,
+	COALESCE(
+		tp.counterparty_name,
+		tf.counterparty_name
+	) AS counterparty_name,
 
-		COALESCE(
-			tp.counterparty_phone,
-			tf.counterparty_phone
-		) AS counterparty_phone,
+	COALESCE(
+		tp.counterparty_phone,
+		tf.counterparty_phone
+	) AS counterparty_phone,
 
-		trx.status, 
-		trx.created_at
+	COALESCE(
+		tp.photo,
+		tf.photo
+	) AS photo,
+
+	trx.status,
+	trx.created_at
 
 	FROM transactions trx
 
@@ -239,6 +247,7 @@ func (tr *TransactionRepository) GetAllByUserId(
 			&item.Amount,
 			&item.CounterpartyName,
 			&item.CounterpartyPhone,
+			&item.Photo,
 			&item.Status,
 			&item.CreatedAt,
 		)
@@ -450,8 +459,6 @@ func (ts *TransactionRepository) GetReceiversWithPagination(ctx context.Context,
 	JOIN profiles p ON p.user_id = u.id
 	WHERE p.phone IS NOT NULL
 	AND p.phone <> ''
-	AND p.photo IS NOT NULL
-	AND p.photo <> ''
 	AND (
 	p.phone ILIKE '%' || $1 || '%'
 	OR
@@ -492,8 +499,6 @@ FROM users u
 JOIN profiles p ON p.user_id = u.id
 WHERE p.phone IS NOT NULL
 AND p.phone <> ''
-AND p.photo IS NOT NULL
-AND p.photo <> ''
 AND (
 	p.phone ILIKE '%' || $1 || '%'
 	OR
@@ -522,43 +527,55 @@ func (tr *TransactionRepository) GetChartData(
 
 	sql := `
 WITH MyWallet AS (
-	SELECT id
-	FROM wallets
-	WHERE user_id = $1
-	LIMIT 1
+    SELECT id
+    FROM wallets
+    WHERE user_id = $1
+    LIMIT 1
 ),
 
 MyTransfers AS (
-	SELECT 
-		tf.transaction_id,
-		tf.amount,
-		CASE 
-			WHEN tf.receiver_wallet_id = (SELECT id FROM MyWallet) THEN 'in'
-			ELSE 'out'
-		END AS flow,
-		trx.created_at::date AS trx_date
-	FROM transfers tf
-	JOIN transactions trx ON trx.id = tf.transaction_id
-	WHERE tf.sender_wallet_id = (SELECT id FROM MyWallet)
-	   OR tf.receiver_wallet_id = (SELECT id FROM MyWallet)
+    SELECT
+        tf.amount,
+        CASE
+            WHEN tf.receiver_wallet_id = (SELECT id FROM MyWallet)
+            THEN 'in'
+            ELSE 'out'
+        END AS flow,
+        trx.created_at::date AS trx_date
+    FROM transfers tf
+    JOIN transactions trx
+        ON trx.id = tf.transaction_id
+    WHERE tf.sender_wallet_id = (SELECT id FROM MyWallet)
+       OR tf.receiver_wallet_id = (SELECT id FROM MyWallet)
 ),
 
-AllTx AS (
-	SELECT * FROM MyTransfers
+DateSeries AS (
+    SELECT generate_series(
+        CURRENT_DATE - $2::interval,
+        CURRENT_DATE,
+        '1 day'
+    )::date AS trx_date
 )
 
-SELECT 
-	trx_date,
-	SUM(amount) AS amount,
-	flow
-FROM AllTx
-WHERE trx_date >= (CURRENT_DATE - $2::interval)
-  AND ($3 = 'all' OR flow = $3)
-GROUP BY trx_date, flow
-ORDER BY trx_date ASC;
+SELECT
+    ds.trx_date,
+    COALESCE(SUM(mt.amount), 0) AS amount,
+    $3::text AS flow
+FROM DateSeries ds
+LEFT JOIN MyTransfers mt
+    ON mt.trx_date = ds.trx_date
+    AND mt.flow = $3
+GROUP BY ds.trx_date
+ORDER BY ds.trx_date;
 `
 
-	rows, err := dbtx.Query(ctx, sql, userID, interval, txType)
+	rows, err := dbtx.Query(
+		ctx,
+		sql,
+		userID,
+		interval,
+		txType,
+	)
 	if err != nil {
 		return nil, err
 	}
@@ -569,11 +586,19 @@ ORDER BY trx_date ASC;
 	for rows.Next() {
 		var item model.IncomeExpenseChart
 
-		if err := rows.Scan(&item.Date, &item.Amount, &item.Type); err != nil {
+		if err := rows.Scan(
+			&item.Date,
+			&item.Amount,
+			&item.Type,
+		); err != nil {
 			return nil, err
 		}
 
 		result = append(result, item)
+	}
+
+	if err := rows.Err(); err != nil {
+		return nil, err
 	}
 
 	return result, nil

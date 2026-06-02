@@ -3,16 +3,17 @@ package model
 import "time"
 
 type TransactionResponse struct {
-	TransactionID     int       `db:"transaction_id"`
-	ReferenceCode     string    `db:"reference_code"`
-	TransactionType   string    `db:"transaction_type"`  // "topup" atau "transfer"
-	TransactionLabel  string    `db:"transaction_label"` // "Top Up", "Transfer Masuk"
-	FlowType          string    `db:"flow_type"`         // "in" atau "out"
-	Amount            float64   `db:"amount"`
-	CounterpartyName  *string   `db:"counterparty_name"`  // Nama lawan / nama payment method
-	CounterpartyPhone *string   `db:"counterparty_phone"` // Pakai pointer agar aman dari NULL
-	Status            string    `db:"status"`
-	CreatedAt         time.Time `db:"created_at"`
+	TransactionID     int       `json:"transaction_id"`
+	ReferenceCode     string    `json:"reference_code"`
+	TransactionType   string    `json:"transaction_type"`
+	TransactionLabel  string    `json:"transaction_label"`
+	FlowType          string    `json:"flow_type"`
+	Amount            float64   `json:"amount"`
+	CounterpartyName  *string   `json:"counterparty_name"`
+	CounterpartyPhone *string   `json:"counterparty_phone"`
+	Photo             *string   `json:"photo"`
+	Status            string    `json:"status"`
+	CreatedAt         time.Time `json:"created_at"`
 }
 
 type Topups struct {

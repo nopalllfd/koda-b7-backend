@@ -3,16 +3,17 @@ package dto
 import "time"
 
 type TransactionResponse struct {
-	TransactionID     int       `json:"transaction_id" db:"transaction_id"`
-	ReferenceCode     string    `json:"reference_code" db:"reference_code"`
-	TransactionType   string    `json:"transaction_type" db:"transaction_type"`   // "topup" atau "transfer"
-	TransactionLabel  string    `json:"transaction_label" db:"transaction_label"` // "Top Up", "Transfer Masuk"
-	FlowType          string    `json:"flow_type" db:"flow_type"`                 // "in" atau "out"
-	Amount            float64   `json:"amount" db:"amount"`
-	CounterpartyName  *string   `json:"counterparty_name" db:"counterparty_name"`   // Nama lawan / nama payment method
-	CounterpartyPhone *string   `json:"counterparty_phone" db:"counterparty_phone"` // Pakai pointer agar aman dari NULL
-	Status            string    `json:"status" db:"status"`
-	CreatedAt         time.Time `json:"created_at" db:"created_at"`
+	TransactionID     int       `db:"transaction_id"`
+	ReferenceCode     string    `db:"reference_code"`
+	TransactionType   string    `db:"transaction_type"`
+	TransactionLabel  string    `db:"transaction_label"`
+	FlowType          string    `db:"flow_type"`
+	Amount            float64   `db:"amount"`
+	CounterpartyName  *string   `db:"counterparty_name"`
+	CounterpartyPhone *string   `db:"counterparty_phone"`
+	Photo             *string   `db:"photo"`
+	Status            string    `db:"status"`
+	CreatedAt         time.Time `db:"created_at"`
 }
 
 type TransactionPaginationResponse struct {

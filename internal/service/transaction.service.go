@@ -1,10 +1,6 @@
 package service
 
 import (
-	"backend-golang/internal/dto"
-	errs "backend-golang/internal/err"
-	"backend-golang/internal/repository"
-	"backend-golang/pkg"
 	"context"
 	"errors"
 	"fmt"
@@ -12,6 +8,12 @@ import (
 	"math"
 	"os"
 	"time"
+
+	"github.com/nopalllfd/koda-b7-backend/internal/dto"
+	errs "github.com/nopalllfd/koda-b7-backend/internal/err"
+	"github.com/nopalllfd/koda-b7-backend/internal/model"
+	"github.com/nopalllfd/koda-b7-backend/internal/repository"
+	"github.com/nopalllfd/koda-b7-backend/pkg"
 
 	"github.com/jackc/pgx/v5/pgxpool"
 )
@@ -83,6 +85,7 @@ func (ts *TransactionService) GetAllUserTransaction(ctx context.Context, userID 
 			Amount:            trx.Amount,
 			CounterpartyName:  trx.CounterpartyName,
 			CounterpartyPhone: trx.CounterpartyPhone,
+			Photo:             trx.Photo,
 			Status:            trx.Status,
 			CreatedAt:         trx.CreatedAt,
 		}
@@ -229,10 +232,6 @@ func (ts *TransactionService) CreateTopup(
 		return dto.TopupResponse{}, errs.ErrTransactionFailed
 	}
 
-	// =========================
-	// DELETE REDIS CACHE
-	// =========================
-
 	err = ts.transactionRepo.DeleteTransactionCache(
 		ctx,
 		userID,
@@ -247,6 +246,7 @@ func (ts *TransactionService) CreateTopup(
 		ReferenceCode:    refCode,
 		PaymentReference: paymentRef,
 		Amount:           float64(input.Amount),
+		TaxAmount:        taxAmount,
 		AdminFee:         adminFee,
 		Total:            totalAmount,
 		Status:           status,
@@ -457,6 +457,7 @@ func (ts *TransactionService) GetChartData(
 	if query.Period != "7d" && query.Period != "1m" {
 		return nil, errors.New("invalid date range")
 	}
+
 	if query.Period == "1m" {
 		interval = "30 days"
 	} else {
@@ -478,27 +479,78 @@ func (ts *TransactionService) GetChartData(
 		return nil, errors.New("invalid flow type")
 	}
 
-	data, err := ts.transactionRepo.GetChartData(
+	var data []model.IncomeExpenseChart
+	var err error
+
+	if txType == "all" {
+		income, err := ts.transactionRepo.GetChartData(
+			ctx,
+			ts.db,
+			userID,
+			interval,
+			"in",
+		)
+		if err != nil {
+			return nil, err
+		}
+
+		expense, err := ts.transactionRepo.GetChartData(
+			ctx,
+			ts.db,
+			userID,
+			interval,
+			"out",
+		)
+		if err != nil {
+			return nil, err
+		}
+
+		data = append(income, expense...)
+	} else {
+		data, err = ts.transactionRepo.GetChartData(
+			ctx,
+			ts.db,
+			userID,
+			interval,
+			txType,
+		)
+		if err != nil {
+			return nil, err
+		}
+	}
+
+	var response []dto.IncomeExpenseChart
+
+	for _, item := range data {
+		response = append(response, dto.IncomeExpenseChart{
+			Date:   item.Date,
+			Amount: item.Amount,
+			Type:   item.Type,
+		})
+	}
+
+	return response, nil
+}
+
+func (ts *AuthService) GetUserDetail(
+	ctx context.Context,
+	userID int,
+) (*dto.UserDetailResponse, error) {
+
+	user, err := ts.authRepo.GetUserDetail(
 		ctx,
-		ts.db,
 		userID,
-		interval,
-		txType,
 	)
 
 	if err != nil {
 		return nil, err
 	}
 
-	var response []dto.IncomeExpenseChart
-
-	for _, item := range data {
-
-		response = append(response, dto.IncomeExpenseChart{
-			Date:   item.Date,
-			Amount: item.Amount,
-			Type:   item.Type,
-		})
+	response := &dto.UserDetailResponse{
+		ID:       user.ID,
+		WalletID: user.WalletID,
+		FullName: user.FullName,
+		Phone:    user.Phone,
 	}
 
 	return response, nil

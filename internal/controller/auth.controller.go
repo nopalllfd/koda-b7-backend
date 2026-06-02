@@ -1,16 +1,18 @@
 package controller
 
 import (
-	"backend-golang/internal/dto"
-	errs "backend-golang/internal/err"
-	"backend-golang/internal/service"
-	"backend-golang/pkg"
-	"backend-golang/pkg/utils"
 	"errors"
 	"fmt"
 	"log"
 	"net/http"
+	"strconv"
 	"strings"
+
+	"github.com/nopalllfd/koda-b7-backend/internal/dto"
+	errs "github.com/nopalllfd/koda-b7-backend/internal/err"
+	"github.com/nopalllfd/koda-b7-backend/internal/service"
+	"github.com/nopalllfd/koda-b7-backend/pkg"
+	"github.com/nopalllfd/koda-b7-backend/pkg/utils"
 
 	"github.com/gin-gonic/gin"
 	"github.com/gin-gonic/gin/binding"
@@ -41,35 +43,35 @@ func NewAuthController(authService *service.AuthService) *AuthController {
 func (ac *AuthController) Login(ctx *gin.Context) {
 	var user dto.LoginRequest
 
-	if err := ctx.ShouldBindBodyWith(&user, binding.JSON); err != nil {
+	if err := ctx.ShouldBindJSON(&user); err != nil {
 
-		if strings.Contains(err.Error(), "Email") {
+		errMsg := err.Error()
 
-			if strings.Contains(err.Error(), "required") {
-				utils.SendResponse(ctx, http.StatusBadRequest, false, "email is required", nil, err.Error())
+		// email
+		if strings.Contains(errMsg, "Email") {
+			if strings.Contains(errMsg, "required") {
+				utils.SendResponse(ctx, http.StatusBadRequest, false, "email is required", nil, errMsg)
 				return
 			}
-
-			if strings.Contains(err.Error(), "email") {
-				utils.SendResponse(ctx, http.StatusBadRequest, false, "invalid email format", nil, err.Error())
-				return
-			}
-		}
-
-		if strings.Contains(err.Error(), "Password") {
-
-			if strings.Contains(err.Error(), "required") {
-				utils.SendResponse(ctx, http.StatusBadRequest, false, "password is required", nil, err.Error())
-				return
-			}
-
-			if strings.Contains(err.Error(), "min") {
-				utils.SendResponse(ctx, http.StatusBadRequest, false, "password must be at least 8 characters", nil, err)
+			if strings.Contains(errMsg, "email") {
+				utils.SendResponse(ctx, http.StatusBadRequest, false, "invalid email format", nil, errMsg)
 				return
 			}
 		}
 
-		utils.SendResponse(ctx, http.StatusBadRequest, false, "invalid request body", nil, err.Error())
+		// password
+		if strings.Contains(errMsg, "Password") {
+			if strings.Contains(errMsg, "required") {
+				utils.SendResponse(ctx, http.StatusBadRequest, false, "password is required", nil, errMsg)
+				return
+			}
+		}
+
+		utils.SendResponse(ctx, http.StatusBadRequest, false, "invalid request body", nil, errMsg)
+		return
+	}
+	if len(user.Password) < 8 {
+		utils.SendResponse(ctx, 400, false, "password must be at least 8 characters", nil, nil)
 		return
 	}
 
@@ -331,7 +333,12 @@ func (ac *AuthController) Logout(ctx *gin.Context) {
 		Token:     tokenString,
 		ExpiredAt: claims.ExpiresAt.Time,
 	}
-	ac.authService.Logout(ctx.Request.Context(), data)
+	if err := ac.authService.Logout(ctx.Request.Context(), data); err != nil {
+		utils.SendResponse(ctx, http.StatusInternalServerError, false, "logout failed", nil, err.Error())
+		return
+	}
+	utils.SendResponse(ctx, http.StatusOK, true, "logout success", nil, nil)
+
 }
 
 // Forgot Password
@@ -468,6 +475,62 @@ func (ac *AuthController) ResetPassword(ctx *gin.Context) {
 		true,
 		"reset password success",
 		nil,
+		nil,
+	)
+}
+
+// Get User Detail By ID
+//
+//	@Summary		Get user detail by id
+//	@Description	get user detail using user id
+//	@Tags			auth
+//	@Accept			json
+//	@Produce		json
+//	@Param			id	path		int	true	"user id"
+//	@Success		200		{object}	dto.UserDetailSwaggerResponse
+//	@Failure		400		{object}	dto.ErrorSwaggerResponse
+//	@Failure		500		{object}	dto.ErrorSwaggerResponse
+//	@Router			/auth/user/{id} [get]
+func (ac *AuthController) GetUserDetail(ctx *gin.Context) {
+
+	idStr := ctx.Param("id")
+
+	id, err := strconv.Atoi(idStr)
+	if err != nil {
+		utils.SendResponse(
+			ctx,
+			http.StatusBadRequest,
+			false,
+			"invalid user id",
+			nil,
+			err.Error(),
+		)
+		return
+	}
+
+	data, err := ac.authService.GetUserDetail(
+		ctx.Request.Context(),
+		id,
+	)
+
+	if err != nil {
+		utils.SendResponse(
+			ctx,
+			http.StatusInternalServerError,
+			false,
+			"failed get user detail",
+			nil,
+			err.Error(),
+		)
+		return
+	}
+
+	utils.SendResponse(
+		ctx,
+		http.StatusOK,
+		true,
+		"success get user detail",
+		data,
 		nil,
 	)
 }

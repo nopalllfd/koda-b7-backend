@@ -1,9 +1,10 @@
 package repository
 
 import (
-	"backend-golang/internal/model"
 	"context"
 	"time"
+
+	"github.com/nopalllfd/koda-b7-backend/internal/model"
 
 	"github.com/jackc/pgx/v5/pgxpool"
 	"github.com/redis/go-redis/v9"
@@ -292,4 +293,43 @@ func (ar *AuthRepository) ValidateChangedPassword(
 	}
 
 	return nil
+}
+
+func (ar *AuthRepository) GetUserDetail(
+	ctx context.Context,
+	userID int,
+) (*model.UserDetail, error) {
+
+	sql := `
+	SELECT
+		u.id,
+		w.id AS wallet_id,
+		COALESCE(p.full_name, '') AS full_name,
+		COALESCE(p.phone, '') AS phone
+	FROM users u
+	JOIN profiles p
+		ON p.user_id = u.id
+	JOIN wallets w
+		ON w.user_id = u.id
+	WHERE u.id = $1
+	`
+
+	var user model.UserDetail
+
+	err := ar.dbtx.QueryRow(
+		ctx,
+		sql,
+		userID,
+	).Scan(
+		&user.ID,
+		&user.WalletID,
+		&user.FullName,
+		&user.Phone,
+	)
+
+	if err != nil {
+		return nil, err
+	}
+
+	return &user, nil
 }

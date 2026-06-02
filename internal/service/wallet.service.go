@@ -1,9 +1,10 @@
 package service
 
 import (
-	"backend-golang/internal/dto"
-	"backend-golang/internal/repository"
 	"context"
+
+	"github.com/nopalllfd/koda-b7-backend/internal/dto"
+	"github.com/nopalllfd/koda-b7-backend/internal/repository"
 )
 
 type WalletService struct {

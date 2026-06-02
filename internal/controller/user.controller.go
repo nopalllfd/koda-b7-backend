@@ -1,18 +1,18 @@
 package controller
 
 import (
-	"backend-golang/internal/dto"
-	errs "backend-golang/internal/err"
-	"backend-golang/internal/service"
-	"backend-golang/pkg"
-	"backend-golang/pkg/utils"
 	"errors"
 	"fmt"
 	"log"
 	"net/http"
-	"path"
 	"path/filepath"
 	"time"
+
+	"github.com/nopalllfd/koda-b7-backend/internal/dto"
+	errs "github.com/nopalllfd/koda-b7-backend/internal/err"
+	"github.com/nopalllfd/koda-b7-backend/internal/service"
+	"github.com/nopalllfd/koda-b7-backend/pkg"
+	"github.com/nopalllfd/koda-b7-backend/pkg/utils"
 
 	"github.com/gin-gonic/gin"
 	"github.com/gin-gonic/gin/binding"
@@ -97,8 +97,7 @@ func (uc *UserController) EditProfile(ctx *gin.Context) {
 	}
 
 	if profile.Photo != nil {
-
-		ext := path.Ext(profile.Photo.Filename)
+		ext := filepath.Ext(profile.Photo.Filename)
 
 		filename := fmt.Sprintf(
 			"profile_%d%s",
@@ -106,9 +105,10 @@ func (uc *UserController) EditProfile(ctx *gin.Context) {
 			ext,
 		)
 
-		dst := filepath.Join("public", "img", filename)
+		// lokasi fisik file di server
+		savePath := filepath.Join("public", "img", filename)
 
-		if err := ctx.SaveUploadedFile(profile.Photo, dst); err != nil {
+		if err := ctx.SaveUploadedFile(profile.Photo, savePath); err != nil {
 			utils.SendResponse(
 				ctx,
 				http.StatusInternalServerError,
@@ -120,7 +120,8 @@ func (uc *UserController) EditProfile(ctx *gin.Context) {
 			return
 		}
 
-		profile.PhotoPath = dst
+		// path yang disimpan ke database
+		profile.PhotoPath = "/img/" + filename
 	}
 
 	if err := uc.userService.EditProfile(
@@ -130,21 +131,49 @@ func (uc *UserController) EditProfile(ctx *gin.Context) {
 	); err != nil {
 
 		if errors.Is(err, errs.ErrPhoneAlreadyUsed) {
-			utils.SendResponse(ctx, http.StatusConflict, false, "edit profile failed", nil, err.Error())
+			utils.SendResponse(
+				ctx,
+				http.StatusConflict,
+				false,
+				"edit profile failed",
+				nil,
+				err.Error(),
+			)
 			return
 		}
 
 		if errors.Is(err, errs.ErrProfileNotFound) {
-			utils.SendResponse(ctx, http.StatusNotFound, false, "edit profile failed", nil, err.Error())
+			utils.SendResponse(
+				ctx,
+				http.StatusNotFound,
+				false,
+				"edit profile failed",
+				nil,
+				err.Error(),
+			)
 			return
 		}
 
 		if errors.Is(err, errs.ErrInvalidInput) {
-			utils.SendResponse(ctx, http.StatusBadRequest, false, "edit profile failed", nil, err.Error())
+			utils.SendResponse(
+				ctx,
+				http.StatusBadRequest,
+				false,
+				"edit profile failed",
+				nil,
+				err.Error(),
+			)
 			return
 		}
 
-		utils.SendResponse(ctx, http.StatusInternalServerError, false, "edit profile failed", nil, err.Error())
+		utils.SendResponse(
+			ctx,
+			http.StatusInternalServerError,
+			false,
+			"edit profile failed",
+			nil,
+			err.Error(),
+		)
 		return
 	}
 

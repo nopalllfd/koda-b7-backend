@@ -1,8 +1,9 @@
 package repository
 
 import (
-	"backend-golang/internal/model"
 	"context"
+
+	"github.com/nopalllfd/koda-b7-backend/internal/model"
 
 	"github.com/jackc/pgx/v5/pgxpool"
 )

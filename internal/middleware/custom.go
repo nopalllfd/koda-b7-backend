@@ -1,8 +1,9 @@
 package middleware
 
 import (
-	"backend-golang/internal/dto"
 	"net/http"
+
+	"github.com/nopalllfd/koda-b7-backend/internal/dto"
 
 	"github.com/gin-gonic/gin"
 )

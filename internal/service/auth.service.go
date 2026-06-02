@@ -1,16 +1,17 @@
 package service
 
 import (
-	"backend-golang/internal/dto"
-	errs "backend-golang/internal/err"
-	"backend-golang/internal/repository"
-	"backend-golang/pkg"
-	"backend-golang/pkg/utils"
 	"context"
 	"errors"
 	"fmt"
 	"log"
 	"os"
+
+	"github.com/nopalllfd/koda-b7-backend/internal/dto"
+	errs "github.com/nopalllfd/koda-b7-backend/internal/err"
+	"github.com/nopalllfd/koda-b7-backend/internal/repository"
+	"github.com/nopalllfd/koda-b7-backend/pkg"
+	"github.com/nopalllfd/koda-b7-backend/pkg/utils"
 
 	"github.com/jackc/pgx/v5"
 )

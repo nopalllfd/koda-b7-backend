@@ -4,7 +4,7 @@ import "time"
 
 type LoginRequest struct {
 	Email    string `json:"email" binding:"required,email" example:"naufal@test.com"`
-	Password string `json:"password" binding:"required,min=8" example:"87654321"`
+	Password string `json:"password" binding:"required" example:"87654321"`
 }
 
 type RegisterRequest struct {
@@ -69,4 +69,21 @@ type ForgotPasswordRequest struct {
 type ResetPasswordRequest struct {
 	Token       string `json:"token" binding:"required"`
 	NewPassword string `json:"new_password" binding:"required,min=8"`
+}
+
+type UserDetailResponse struct {
+	ID       int    `json:"id"`
+	WalletID int    `json:"wallet_id"`
+	FullName string `json:"full_name"`
+	Phone    string `json:"phone"`
+}
+
+type UserDetailRequest struct {
+	ID int `json:"id" binding:"required"`
+}
+
+type UserDetailSwaggerResponse struct {
+	Success bool               `json:"success" example:"true"`
+	Message string             `json:"message" example:"success get user detail"`
+	Data    UserDetailResponse `json:"data"`
 }

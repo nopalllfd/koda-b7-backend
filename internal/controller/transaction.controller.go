@@ -1,14 +1,15 @@
 package controller
 
 import (
-	"backend-golang/internal/dto"
-	errs "backend-golang/internal/err"
-	"backend-golang/internal/service"
-	"backend-golang/pkg"
-	"backend-golang/pkg/utils"
 	"errors"
 	"log"
 	"net/http"
+
+	"github.com/nopalllfd/koda-b7-backend/internal/dto"
+	errs "github.com/nopalllfd/koda-b7-backend/internal/err"
+	"github.com/nopalllfd/koda-b7-backend/internal/service"
+	"github.com/nopalllfd/koda-b7-backend/pkg"
+	"github.com/nopalllfd/koda-b7-backend/pkg/utils"
 
 	"github.com/gin-gonic/gin"
 	"github.com/gin-gonic/gin/binding"
@@ -172,7 +173,7 @@ func (tc *TransactionController) Transfer(ctx *gin.Context) {
 		statusCode := http.StatusInternalServerError
 
 		if errors.Is(err, errs.ErrSameWalletTransfer) ||
-			errors.Is(err, errs.ErrInsufficientBalance) {
+			errors.Is(err, errs.ErrInsufficientBalance) || errors.Is(err, errs.ErrInvalidPin) {
 			statusCode = http.StatusBadRequest
 		}
 
