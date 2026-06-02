@@ -9,7 +9,7 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v5
-      - name: Build And Publish ${{github.repository}}
+      - name: Build-And-Publish ${{github.repository}}
         uses: macbre/push-to-ghcr@master
         with:
           github_token: ${{secrets.GITHUB_TOKEN}}
