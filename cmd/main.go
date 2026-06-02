@@ -45,5 +45,5 @@ func main() {
 
 	router.InitRoutes(app, db, rc)
 
-	app.Run("0.0.0.0:5000")
+	app.Run("0.0.0.0:8080")
 }
