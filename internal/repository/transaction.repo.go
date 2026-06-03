@@ -453,7 +453,7 @@ func (ts *TransactionRepository) GetReceiversWithPagination(ctx context.Context,
 	offset := (query.Page - 1) * query.Limit
 
 	sql := `
-		SELECT u.id, p.photo, p.full_name, p.phone
+		SELECT u.id, COALESCE(p.photo, '') as photo, p.full_name, p.phone
 	FROM users u
 	JOIN profiles p ON p.user_id = u.id
 	WHERE p.phone IS NOT NULL

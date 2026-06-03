@@ -11,14 +11,10 @@ RUN CGO_ENABLED=0 go build -o main ./cmd
 
 FROM alpine:latest
 
-RUN apk --no-cache add ca-certificates
 
 WORKDIR /app
 
 COPY --from=builder /app/main .
-
-# bikin folder di runtime (INI YANG BENAR)
-RUN mkdir -p uploads
 
 EXPOSE 8080
 
