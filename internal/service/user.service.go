@@ -23,12 +23,16 @@ func NewUserService(userRepo *repository.UserRepository) *UserService {
 func (us *UserService) GetUserProfile(ctx context.Context, id int) (dto.Profiles, error) {
 	result, err := us.userRepo.GetProfile(ctx, id)
 	if err != nil {
+		log.Printf("[GetUserProfile] GetProfile error userID=%d error=%v", id, err)
+
 		if errors.Is(err, errs.ErrProfileNotFound) {
 			return dto.Profiles{}, err
 		}
+
 		if errors.Is(err, errs.ErrInternalServer) {
 			return dto.Profiles{}, err
 		}
+
 		return dto.Profiles{}, err
 	}
 
@@ -58,10 +62,23 @@ func (us *UserService) EditProfile(
 		)
 
 		if err != nil {
+			log.Printf(
+				"[EditProfile] FindByPhone error userID=%d phone=%s error=%v",
+				userID,
+				req.Phone,
+				err,
+			)
+
 			return err
 		}
 
 		if exists {
+			log.Printf(
+				"[EditProfile] Phone already used userID=%d phone=%s",
+				userID,
+				req.Phone,
+			)
+
 			return errs.ErrPhoneAlreadyUsed
 		}
 	}
@@ -91,11 +108,21 @@ func (us *UserService) EditProfile(
 	)
 
 	if err != nil {
-		log.Println("SERVICE ERROR:", err)
+		log.Printf(
+			"[EditProfile] Edit profile error userID=%d error=%v",
+			userID,
+			err,
+		)
+
 		return err
 	}
 
 	if rowsAffected == 0 {
+		log.Printf(
+			"[EditProfile] Profile not found userID=%d",
+			userID,
+		)
+
 		return errs.ErrProfileNotFound
 	}
 

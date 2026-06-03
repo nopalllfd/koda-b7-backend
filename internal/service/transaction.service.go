@@ -35,14 +35,17 @@ func (ts *TransactionService) CheckPin(ctx context.Context, userID int, pin stri
 	hc.OwaspRecomendedHashConfig()
 	existingPin, err := ts.transactionRepo.GetPinByUserId(ctx, ts.db, userID)
 	if err != nil {
+		log.Printf("[CheckPin] GetPinByUserId error userID=%d: %v", userID, err)
+
 		if errors.Is(err, errs.ErrUserNotFound) || errors.Is(err, errs.ErrPINNotSet) {
 			return err
 		}
+
 		return errs.ErrInternalServer
 	}
 
-	log.Println("ini pin awal", pin)
 	if err := hc.Compare(pin, existingPin); err != nil {
+		log.Printf("[CheckPin] Invalid PIN userID=%d: %v", userID, err)
 		return errs.ErrInvalidPin
 	}
 	return nil
@@ -69,6 +72,7 @@ func (ts *TransactionService) GetAllUserTransaction(ctx context.Context, userID 
 	)
 
 	if err != nil {
+		log.Printf("[GetAllUserTransaction] userID=%d query=%+v error=%v", userID, query, err)
 		return nil, err
 	}
 
@@ -141,6 +145,7 @@ func (ts *TransactionService) CreateTopup(
 
 	tx, err := ts.db.Begin(ctx)
 	if err != nil {
+		log.Printf("[CreateTopup] Begin transaction error userID=%d: %v", userID, err)
 		return dto.TopupResponse{}, errs.ErrTransactionFailed
 	}
 	defer tx.Rollback(ctx)
@@ -151,6 +156,7 @@ func (ts *TransactionService) CreateTopup(
 		userID,
 	)
 	if err != nil {
+		log.Printf("[CreateTopup] GetWalletIdByUserID userID=%d error=%v", userID, err)
 		return dto.TopupResponse{}, err
 	}
 
@@ -182,6 +188,7 @@ func (ts *TransactionService) CreateTopup(
 		status,
 	)
 	if err != nil {
+		log.Printf("[CreateTopup] CreateTransaction error=%v", err)
 		return dto.TopupResponse{}, err
 	}
 
@@ -198,6 +205,7 @@ func (ts *TransactionService) CreateTopup(
 	)
 
 	if err != nil {
+		log.Printf("[CreateTopup] CreateTopup error=%v", err)
 		return dto.TopupResponse{}, err
 	}
 
@@ -208,6 +216,7 @@ func (ts *TransactionService) CreateTopup(
 	)
 
 	if err != nil {
+		log.Printf("[CreateTopup] GetWalletBalance walletID=%d error=%v", walletID, err)
 		return dto.TopupResponse{}, errs.ErrWalletNotFound
 	}
 
@@ -221,14 +230,12 @@ func (ts *TransactionService) CreateTopup(
 	)
 
 	if err != nil {
+		log.Printf("[CreateTopup] UpdateWalletBalance walletID=%d error=%v", walletID, err)
 		return dto.TopupResponse{}, errs.ErrUpdateBalanceFailed
 	}
 
-	// =========================
-	// COMMIT TRANSACTION
-	// =========================
-
 	if err := tx.Commit(ctx); err != nil {
+		log.Printf("[CreateTopup] Commit error=%v", err)
 		return dto.TopupResponse{}, errs.ErrTransactionFailed
 	}
 
@@ -238,7 +245,7 @@ func (ts *TransactionService) CreateTopup(
 	)
 
 	if err != nil {
-		log.Println(err)
+		log.Printf("[CreateTopup] DeleteTransactionCache error=%v", err)
 	}
 
 	return dto.TopupResponse{
@@ -261,43 +268,64 @@ func (ts *TransactionService) CreateTransfer(ctx context.Context, input dto.Tran
 
 	existingPin, err := ts.transactionRepo.GetPinByUserId(ctx, ts.db, userID)
 	if err != nil {
+		log.Printf("[CreateTransfer] GetPinByUserId userID=%d error=%v", userID, err)
+
 		if errors.Is(err, errs.ErrUserNotFound) || errors.Is(err, errs.ErrPINNotSet) {
 			return dto.TransferResponse{}, err
 		}
+
 		return dto.TransferResponse{}, errs.ErrInternalServer
 	}
 
-	log.Println("ini pin awal", input.Pin)
 	if err := hc.Compare(input.Pin, existingPin); err != nil {
+		log.Printf("[CreateTransfer] Invalid PIN userID=%d", userID)
 		return dto.TransferResponse{}, errs.ErrInvalidPin
 	}
 
 	tx, err := ts.db.Begin(ctx)
 	if err != nil {
+		log.Printf("[CreateTransfer] Begin transaction error=%v", err)
 		return dto.TransferResponse{}, errs.ErrTransactionFailed
 	}
 	defer tx.Rollback(ctx)
 
 	SenderWalletID, err := ts.transactionRepo.GetWalletIdByUserID(ctx, tx, userID)
 	if err != nil {
+		log.Printf("[CreateTransfer] GetWalletIdByUserID error=%v", err)
 		return dto.TransferResponse{}, err
 	}
 
 	if SenderWalletID == input.ReceiverWalletID {
+		log.Printf("[CreateTransfer] Same wallet sender=%d receiver=%d",
+			SenderWalletID,
+			input.ReceiverWalletID,
+		)
 		return dto.TransferResponse{}, errs.ErrSameWalletTransfer
 	}
-
 	senderBalance, err := ts.transactionRepo.GetWalletBalance(ctx, tx, SenderWalletID)
 	if err != nil {
+		log.Printf("[CreateTransfer] Sender GetWalletBalance walletID=%d error=%v",
+			SenderWalletID,
+			err,
+		)
 		return dto.TransferResponse{}, errs.ErrWalletNotFound
 	}
-
 	if senderBalance < float64(input.Amount) {
+		log.Printf(
+			"[CreateTransfer] Insufficient balance walletID=%d balance=%.2f amount=%d",
+			SenderWalletID,
+			senderBalance,
+			input.Amount,
+		)
 		return dto.TransferResponse{}, errs.ErrInsufficientBalance
 	}
 
 	receiverBalance, err := ts.transactionRepo.GetWalletBalance(ctx, tx, input.ReceiverWalletID)
 	if err != nil {
+		log.Printf("[CreateTransfer] Receiver GetWalletBalance walletID=%d error=%v",
+			input.ReceiverWalletID,
+			err,
+		)
 		return dto.TransferResponse{}, errs.ErrWalletNotFound
 	}
 
@@ -307,34 +335,64 @@ func (ts *TransactionService) CreateTransfer(ctx context.Context, input dto.Tran
 
 	transactionID, err := ts.transactionRepo.CreateTransaction(ctx, tx, "transfer", refCode, status)
 	if err != nil {
-		return dto.TransferResponse{}, errs.ErrTransactionFailed
+		log.Printf("[CreateTransfer] Receiver GetWalletBalance walletID=%d error=%v",
+			input.ReceiverWalletID,
+			err,
+		)
+		return dto.TransferResponse{}, errs.ErrWalletNotFound
 	}
 
-	if err := ts.transactionRepo.CreateTransfer(ctx, tx, transactionID, SenderWalletID, input.ReceiverWalletID, float64(input.Amount), input.Description); err != nil {
+	if err := ts.transactionRepo.CreateTransfer(
+		ctx,
+		tx,
+		transactionID,
+		SenderWalletID,
+		input.ReceiverWalletID,
+		float64(input.Amount),
+		input.Description,
+	); err != nil {
+
+		log.Printf("[CreateTransfer] CreateTransfer error=%v", err)
+
 		return dto.TransferResponse{}, errs.ErrTransferFailed
 	}
 
 	newSenderBalance := senderBalance - float64(input.Amount)
-	if err := ts.transactionRepo.UpdateWalletBalance(ctx, tx, SenderWalletID, newSenderBalance); err != nil {
+	if err := ts.transactionRepo.UpdateWalletBalance(
+		ctx,
+		tx,
+		SenderWalletID,
+		newSenderBalance,
+	); err != nil {
+
+		log.Printf("[CreateTransfer] Update sender balance error=%v", err)
+
 		return dto.TransferResponse{}, errs.ErrUpdateBalanceFailed
 	}
 
 	newReceiverBalance := receiverBalance + float64(input.Amount)
-	if err := ts.transactionRepo.UpdateWalletBalance(ctx, tx, input.ReceiverWalletID, newReceiverBalance); err != nil {
+	if err := ts.transactionRepo.UpdateWalletBalance(
+		ctx,
+		tx,
+		input.ReceiverWalletID,
+		newReceiverBalance,
+	); err != nil {
+
+		log.Printf("[CreateTransfer] Update receiver balance error=%v", err)
+
 		return dto.TransferResponse{}, errs.ErrUpdateBalanceFailed
 	}
-
 	if err := tx.Commit(ctx); err != nil {
+		log.Printf("[CreateTransfer] Commit error=%v", err)
 		return dto.TransferResponse{}, errs.ErrTransactionFailed
 	}
-
 	err = ts.transactionRepo.DeleteTransactionCache(
 		ctx,
 		userID,
 	)
 
 	if err != nil {
-		log.Println(err)
+		log.Printf("[CreateTransfer] DeleteTransactionCache error=%v", err)
 	}
 
 	return dto.TransferResponse{
@@ -352,6 +410,7 @@ func (ts *TransactionService) CreateTransfer(ctx context.Context, input dto.Tran
 func (ts *TransactionService) GetPaymentMethods(ctx context.Context) ([]dto.PaymentMethods, error) {
 	methods, err := ts.transactionRepo.GetAllPaymentMethods(ctx, ts.db)
 	if err != nil {
+		log.Printf("[GetPaymentMethods] GetAllPaymentMethods error: %v", err)
 		return nil, err
 	}
 
@@ -365,6 +424,7 @@ func (ts *TransactionService) GetPaymentMethods(ctx context.Context) ([]dto.Paym
 		}
 		response = append(response, method)
 	}
+
 	return response, nil
 }
 
@@ -382,10 +442,23 @@ func (ts *TransactionService) GetAllReceivers(
 	)
 
 	if err != nil {
+		log.Printf(
+			"[GetAllReceivers] GetReceiversWithPagination error userID=%d query=%+v error=%v",
+			userID,
+			query,
+			err,
+		)
+
 		return nil, errs.ErrInternalServer
 	}
 
 	if len(data) == 0 {
+		log.Printf(
+			"[GetAllReceivers] No receiver found userID=%d query=%+v",
+			userID,
+			query,
+		)
+
 		return nil, errs.ErrNoReceiverFound
 	}
 
@@ -413,6 +486,7 @@ func (ts *TransactionService) GetAllReceivers(
 
 	nextLink := ""
 	prevLink := ""
+
 	if query.Page < totalPages {
 		nextLink = fmt.Sprintf(
 			"%s/transactions/transfer/receivers?page=%d&limit=%d&search%s",
@@ -422,6 +496,7 @@ func (ts *TransactionService) GetAllReceivers(
 			query.Search,
 		)
 	}
+
 	if query.Page > 1 {
 		prevLink = fmt.Sprintf(
 			"%s/transactions/transfer/receivers?page=%d&limit=%d&search=%s",
@@ -431,6 +506,7 @@ func (ts *TransactionService) GetAllReceivers(
 			query.Search,
 		)
 	}
+
 	result := dto.ReceiverPaginationResponse{
 		Data: response,
 		Meta: dto.PaginationMeta{
@@ -455,6 +531,12 @@ func (ts *TransactionService) GetChartData(
 	var interval string
 
 	if query.Period != "7d" && query.Period != "1m" {
+		log.Printf(
+			"[GetChartData] Invalid period userID=%d period=%s",
+			userID,
+			query.Period,
+		)
+
 		return nil, errors.New("invalid date range")
 	}
 
@@ -465,6 +547,7 @@ func (ts *TransactionService) GetChartData(
 	}
 
 	txType := query.Type
+
 	if txType == "" {
 		txType = "all"
 	}
@@ -476,6 +559,12 @@ func (ts *TransactionService) GetChartData(
 	}
 
 	if txType != "all" && txType != "in" && txType != "out" {
+		log.Printf(
+			"[GetChartData] Invalid flow type userID=%d type=%s",
+			userID,
+			txType,
+		)
+
 		return nil, errors.New("invalid flow type")
 	}
 
@@ -490,7 +579,15 @@ func (ts *TransactionService) GetChartData(
 			interval,
 			"in",
 		)
+
 		if err != nil {
+			log.Printf(
+				"[GetChartData] Income query error userID=%d interval=%s error=%v",
+				userID,
+				interval,
+				err,
+			)
+
 			return nil, err
 		}
 
@@ -501,12 +598,22 @@ func (ts *TransactionService) GetChartData(
 			interval,
 			"out",
 		)
+
 		if err != nil {
+			log.Printf(
+				"[GetChartData] Expense query error userID=%d interval=%s error=%v",
+				userID,
+				interval,
+				err,
+			)
+
 			return nil, err
 		}
 
 		data = append(income, expense...)
+
 	} else {
+
 		data, err = ts.transactionRepo.GetChartData(
 			ctx,
 			ts.db,
@@ -514,7 +621,16 @@ func (ts *TransactionService) GetChartData(
 			interval,
 			txType,
 		)
+
 		if err != nil {
+			log.Printf(
+				"[GetChartData] Query error userID=%d interval=%s type=%s error=%v",
+				userID,
+				interval,
+				txType,
+				err,
+			)
+
 			return nil, err
 		}
 	}
@@ -543,6 +659,12 @@ func (ts *AuthService) GetUserDetail(
 	)
 
 	if err != nil {
+		log.Printf(
+			"[GetUserDetail] GetUserDetail error userID=%d error=%v",
+			userID,
+			err,
+		)
+
 		return nil, err
 	}
 
