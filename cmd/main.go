@@ -27,7 +27,9 @@ import (
 // @name						Authorization
 // @description					Bearer token used for authorization
 func main() {
-	_ = godotenv.Load()
+	if err := godotenv.Load(); err != nil {
+		log.Fatal(err, "Gagal load env")
+	}
 
 	app := gin.Default()
 

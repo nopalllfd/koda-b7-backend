@@ -1,7 +1,7 @@
 CREATE TABLE payment_methods (
 id SERIAL PRIMARY KEY,
 name VARCHAR(50) NOT NULL UNIQUE,
-logo VARCHAR(255),
+icon VARCHAR(255),
 created_at TIMESTAMP DEFAULT NOW(),
 updated_at TIMESTAMP
 );

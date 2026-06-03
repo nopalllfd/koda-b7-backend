@@ -232,8 +232,7 @@ MyTransfers AS (
 	}
 	defer rows.Close()
 
-	var transactions []model.TransactionResponse
-
+	transactions := []model.TransactionResponse{}
 	for rows.Next() {
 
 		var item model.TransactionResponse
