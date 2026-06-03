@@ -1,6 +1,6 @@
 -- db/seeds/payment_methods.sql
 
-INSERT INTO payment_methods (name, logo)
+INSERT INTO payment_methods (name, icon)
 VALUES
 ('BCA','bca.png'),
 ('BNI', 'bni.png'),

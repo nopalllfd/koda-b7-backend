@@ -406,7 +406,7 @@ func (tr *TransactionRepository) CreateTransfer(ctx context.Context, dbtx DBTX, 
 }
 
 func (tr *TransactionRepository) GetAllPaymentMethods(ctx context.Context, dbtx DBTX) ([]model.PaymentMethods, error) {
-	sql := `SELECT id, name, logo, created_at, updated_at FROM payment_methods`
+	sql := `SELECT id, name, icon, created_at, updated_at FROM payment_methods`
 	rows, err := dbtx.Query(ctx, sql)
 	if err != nil {
 		return nil, err
