@@ -36,6 +36,7 @@ func (us *UserService) GetUserProfile(ctx context.Context, id int) (dto.Profiles
 		User_id:   result.User_id,
 		FullName:  result.FullName,
 		Photo:     result.Photo,
+		Email:     result.Email,
 		Phone:     result.Phone,
 		CreatedAt: result.Created_at,
 		UpdatedAt: &result.Updated_at,

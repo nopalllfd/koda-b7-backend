@@ -30,10 +30,19 @@ func (ur *UserRepository) Create(ctx context.Context, userID int, full_name, pho
 }
 
 func (ur *UserRepository) GetProfile(ctx context.Context, id int) (model.Profile, error) {
-	sql := "SELECT user_id, COALESCE(full_name, '') as full_name, COALESCE(photo, '') as photo, COALESCE(phone, '') as phone FROM profiles WHERE user_id = $1"
-
+	sql := `
+	SELECT
+		p.user_id,
+		COALESCE(p.full_name, '') AS full_name,
+		COALESCE(p.photo, '') AS photo,
+		COALESCE(p.phone, '') AS phone,
+		COALESCE(u.email, '') AS email
+	FROM profiles p
+	LEFT JOIN users u ON u.id = p.user_id
+	WHERE p.user_id = $1
+`
 	var user model.Profile
-	if err := ur.db.QueryRow(ctx, sql, id).Scan(&user.User_id, &user.FullName, &user.Photo, &user.Phone); err != nil {
+	if err := ur.db.QueryRow(ctx, sql, id).Scan(&user.User_id, &user.FullName, &user.Photo, &user.Phone, &user.Email); err != nil {
 		if errors.Is(err, pgx.ErrNoRows) {
 			return model.Profile{}, errs.ErrProfileNotFound
 		}
