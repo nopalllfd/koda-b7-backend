@@ -19,9 +19,13 @@ func InitRoutes(app *gin.Engine, db *pgxpool.Pool, rc *redis.Client) {
 	fmt.Println("Swagger route loaded")
 	app.Static("/img", "public/img")
 	app.GET("/swagger/*any", ginSwagger.WrapHandler(swaggerfiles.Handler))
-	SetupAuthRoute(app, db, rc)
-	SetupUserRoute(app, db, rc)
-	SetupTransactionRoute(app, db, rc)
-	SetupUserWallet(app, db, rc)
+	
+	api := app.Group("/api")
+	{
+		SetupAuthRoute(api, db, rc)
+		SetupUserRoute(api, db, rc)
+		SetupTransactionRoute(api, db, rc)
+		SetupUserWallet(api, db, rc)
+	}
 
 }

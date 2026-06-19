@@ -11,14 +11,14 @@ import (
 	"github.com/redis/go-redis/v9"
 )
 
-func SetupAuthRoute(app *gin.Engine, db *pgxpool.Pool, rc *redis.Client) {
+func SetupAuthRoute(api *gin.RouterGroup, db *pgxpool.Pool, rc *redis.Client) {
 	UserRepo := repository.NewUserRepo(db)
 	WalletRepo := repository.NewWalletRepo(db)
 	AuthRepo := repository.NewAuthRepo(db, rc)
 	AuthService := service.NewAuthService(AuthRepo, UserRepo, WalletRepo)
 	AuthController := controller.NewAuthController(AuthService)
 
-	auth := app.Group("/api/auth")
+	auth := api.Group("/auth")
 	{
 		//login
 		auth.POST("/login", AuthController.Login)

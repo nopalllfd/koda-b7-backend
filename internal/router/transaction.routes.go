@@ -11,11 +11,11 @@ import (
 	"github.com/redis/go-redis/v9"
 )
 
-func SetupTransactionRoute(app *gin.Engine, db *pgxpool.Pool, rc *redis.Client) {
+func SetupTransactionRoute(api *gin.RouterGroup, db *pgxpool.Pool, rc *redis.Client) {
 	TransactionRepo := repository.NewTransactionRepo(rc)
 	TransactionService := service.NewTransactionService(TransactionRepo, db)
 	TransactionController := controller.NewTransactionController(TransactionService)
-	trx := app.Group("/api/transactions")
+	trx := api.Group("/transactions")
 	{
 		trx.POST("/pin", middleware.VerifyMiddleware(rc), TransactionController.CheckPin)
 		trx.POST("/topup", middleware.VerifyMiddleware(rc), TransactionController.Topup)

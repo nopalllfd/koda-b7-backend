@@ -11,12 +11,12 @@ import (
 	"github.com/redis/go-redis/v9"
 )
 
-func SetupUserRoute(app *gin.Engine, db *pgxpool.Pool, rc *redis.Client) {
+func SetupUserRoute(api *gin.RouterGroup, db *pgxpool.Pool, rc *redis.Client) {
 	UserRepo := repository.NewUserRepo(db)
 	UserService := service.NewUserService(UserRepo)
 	UserController := controller.NewUserController(UserService)
 
-	user := app.Group("/api/user")
+	user := api.Group("/user")
 	{
 		user.GET("/profile", middleware.VerifyMiddleware(rc), UserController.GetProfile)
 		user.PATCH("/profile", middleware.VerifyMiddleware(rc), UserController.EditProfile)

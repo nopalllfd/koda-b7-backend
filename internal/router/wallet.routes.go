@@ -11,12 +11,12 @@ import (
 	"github.com/redis/go-redis/v9"
 )
 
-func SetupUserWallet(app *gin.Engine, db *pgxpool.Pool, rc *redis.Client) {
+func SetupUserWallet(api *gin.RouterGroup, db *pgxpool.Pool, rc *redis.Client) {
 	WalletRepo := repository.NewWalletRepo(db)
 	WalletService := service.NewWalletService(WalletRepo)
 	WalletController := controller.NewWalletController(WalletService)
 
-	user := app.Group("/api/wallet")
+	user := api.Group("/wallet")
 	user.Use(middleware.VerifyMiddleware(rc))
 	{
 		user.GET("/dashboard", WalletController.GetDashboard)
