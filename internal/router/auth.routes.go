@@ -21,12 +21,12 @@ func SetupAuthRoute(api *gin.RouterGroup, db *pgxpool.Pool, rc *redis.Client) {
 	auth := api.Group("/auth")
 	{
 		//login
-		auth.POST("/login", AuthController.Login)
+		auth.POST("/login", middleware.RateLimit(), AuthController.Login)
 		//register
-		auth.POST("/register", AuthController.Register)
+		auth.POST("/register", middleware.RateLimit(), AuthController.Register)
 		auth.DELETE("/logout", middleware.VerifyMiddleware(rc), AuthController.Logout)
 
-		auth.POST("/pin", middleware.VerifyMiddleware(rc), AuthController.SetUserPin)
+		auth.POST("/pin", middleware.VerifyMiddleware(rc), middleware.RateLimit(), AuthController.SetUserPin)
 		auth.POST("/forgot-password", middleware.VerifyMiddleware(rc), AuthController.ForgotPassword)
 		auth.PATCH("/pin", middleware.VerifyMiddleware(rc), AuthController.UpdateUserPin)
 		auth.PATCH("/reset-password", AuthController.ResetPassword)
